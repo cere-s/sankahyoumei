@@ -12,12 +12,16 @@ import {
 interface Props {
   entry: ParticipationEntry;
   eventId: string;
+  eventName?: string;
 }
 
-export function EntryCard({ entry, eventId }: Props) {
+export function EntryCard({ entry, eventId, eventName }: Props) {
   return (
     <Link href={`/events/${eventId}/entries/${entry.id}`} className="block">
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:shadow-md hover:border-violet-100 transition-all">
+        {eventName && (
+          <p className="text-xs text-violet-600 font-medium mb-2">{eventName}</p>
+        )}
         <div className="flex items-start gap-2 flex-wrap">
           <span className="font-bold text-gray-900 text-sm">{entry.displayName}</span>
           <span className="text-gray-400 text-xs self-center">@{entry.xId}</span>

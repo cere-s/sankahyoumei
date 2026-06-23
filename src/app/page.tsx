@@ -47,9 +47,17 @@ export default async function TopPage() {
           <p className="text-sm text-gray-400 text-center py-8">まだ参加表明がありません</p>
         ) : (
           <div className="space-y-3">
-            {recentEntries.map((entry) => (
-              <EntryCard key={entry.id} entry={entry} eventId={entry.eventId} />
-            ))}
+            {recentEntries.map((entry) => {
+              const event = events.find((e) => e.id === entry.eventId);
+              return (
+                <EntryCard
+                  key={entry.id}
+                  entry={entry}
+                  eventId={entry.eventId}
+                  eventName={event?.name}
+                />
+              );
+            })}
           </div>
         )}
       </section>
