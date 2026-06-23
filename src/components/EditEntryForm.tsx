@@ -14,12 +14,16 @@ import {
   PHOTOGRAPHER_FIRST_MEET_LABELS,
   PHOTOGRAPHER_SHOOTING_STYLE_LABELS,
 } from '@/lib/utils';
+import type { CosplaySuggestions } from '@/lib/entries';
 
 interface Props {
   entry: ParticipationEntry;
   event: Event;
   editToken: string;
+  suggestions?: CosplaySuggestions;
 }
+
+const EMPTY_SUGGESTIONS: CosplaySuggestions = { works: [], charactersByWork: {}, allCharacters: [] };
 
 const inputClass =
   'w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent bg-white';
@@ -35,7 +39,7 @@ const PHOTOGRAPHER_STYLES: PhotographerShootingStyle[] = [
   'natural_light', 'strobe_ok', 'portrait', 'recreation', 'social',
 ];
 
-export function EditEntryForm({ entry, event, editToken }: Props) {
+export function EditEntryForm({ entry, event, editToken, suggestions = EMPTY_SUGGESTIONS }: Props) {
   const router = useRouter();
 
   const [comment, setComment] = useState(entry.comment);
@@ -63,6 +67,9 @@ export function EditEntryForm({ entry, event, editToken }: Props) {
   const [error, setError] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const characterOptions =
+    suggestions.charactersByWork[workName.trim()] ?? suggestions.allCharacters;
 
   function toggleStyle(s: PhotographerShootingStyle) {
     setShootingStyles((prev) =>
@@ -141,12 +148,18 @@ export function EditEntryForm({ entry, event, editToken }: Props) {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">作品名</label>
               <input type="text" value={workName} onChange={(e) => setWorkName(e.target.value)}
-                className={inputClass} />
+                list="work-suggestions" autoComplete="off" className={inputClass} />
+              <datalist id="work-suggestions">
+                {suggestions.works.map((w) => <option key={w} value={w} />)}
+              </datalist>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">キャラ名</label>
               <input type="text" value={characterName} onChange={(e) => setCharacterName(e.target.value)}
-                className={inputClass} />
+                list="character-suggestions" autoComplete="off" className={inputClass} />
+              <datalist id="character-suggestions">
+                {characterOptions.map((c) => <option key={c} value={c} />)}
+              </datalist>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">撮影・交流スタンス</label>

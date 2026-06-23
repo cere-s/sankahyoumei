@@ -9,6 +9,7 @@ import type {
   PhotographerShootingStyle,
   CreateEntryResult,
 } from '@/types';
+import type { CosplaySuggestions } from '@/lib/entries';
 import {
   PARTICIPATION_TYPE_LABELS,
   COSPLAY_SHOOTING_STATUS_LABELS,
@@ -20,7 +21,10 @@ interface Props {
   eventId: string;
   eventName: string;
   defaultDate: string;
+  suggestions?: CosplaySuggestions;
 }
+
+const EMPTY_SUGGESTIONS: CosplaySuggestions = { works: [], charactersByWork: {}, allCharacters: [] };
 
 type FormErrors = Partial<Record<string, string>>;
 type FormState = 'input' | 'success';
@@ -112,7 +116,7 @@ function SuccessView({
   );
 }
 
-export function EntryForm({ eventId, eventName, defaultDate }: Props) {
+export function EntryForm({ eventId, eventName, defaultDate, suggestions = EMPTY_SUGGESTIONS }: Props) {
   const [formState, setFormState] = useState<FormState>('input');
   const [createdData, setCreatedData] = useState<{ entryId: string; editToken: string } | null>(null);
 
@@ -149,6 +153,10 @@ export function EntryForm({ eventId, eventName, defaultDate }: Props) {
       />
     );
   }
+
+  // 選択中の作品に紐づくキャラ名を優先表示。未一致なら全候補をフォールバック
+  const characterOptions =
+    suggestions.charactersByWork[workName.trim()] ?? suggestions.allCharacters;
 
   function toggleStyle(style: PhotographerShootingStyle) {
     setShootingStyles((prev) =>
@@ -276,11 +284,19 @@ export function EntryForm({ eventId, eventName, defaultDate }: Props) {
           <h3 className="text-sm font-bold text-gray-700">コスプレ情報</h3>
           <Field label="作品名" required error={errors.workName}>
             <input type="text" value={workName} onChange={(e) => setWorkName(e.target.value)}
+              list="work-suggestions" autoComplete="off"
               placeholder="例：Re:ゼロから始める異世界生活" className={inputClass} />
+            <datalist id="work-suggestions">
+              {suggestions.works.map((w) => <option key={w} value={w} />)}
+            </datalist>
           </Field>
           <Field label="キャラ名" required error={errors.characterName}>
             <input type="text" value={characterName} onChange={(e) => setCharacterName(e.target.value)}
+              list="character-suggestions" autoComplete="off"
               placeholder="例：レム" className={inputClass} />
+            <datalist id="character-suggestions">
+              {characterOptions.map((c) => <option key={c} value={c} />)}
+            </datalist>
           </Field>
           <Field label="撮影・交流スタンス" required>
             <div className="flex flex-col gap-2">

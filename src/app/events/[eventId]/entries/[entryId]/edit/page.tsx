@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getEventById } from '@/lib/events';
-import { getEntryById } from '@/lib/entries';
+import { getEntryById, getCosplaySuggestions } from '@/lib/entries';
 import { EditEntryForm } from '@/components/EditEntryForm';
 
 export const dynamic = 'force-dynamic';
@@ -31,9 +31,10 @@ export default async function EditEntryPage({ params, searchParams }: Props) {
     );
   }
 
-  const [event, entry] = await Promise.all([
+  const [event, entry, suggestions] = await Promise.all([
     getEventById(eventId),
     getEntryById(entryId),
+    getCosplaySuggestions().catch(() => ({ works: [], charactersByWork: {}, allCharacters: [] })),
   ]);
 
   if (!event || !entry) notFound();
@@ -50,7 +51,7 @@ export default async function EditEntryPage({ params, searchParams }: Props) {
       <p className="text-sm text-gray-500 mb-6">
         {event.name} — {entry.displayName}
       </p>
-      <EditEntryForm entry={entry} event={event} editToken={token} />
+      <EditEntryForm entry={entry} event={event} editToken={token} suggestions={suggestions} />
     </div>
   );
 }

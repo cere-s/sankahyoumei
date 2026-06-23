@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getEventById } from '@/lib/events';
+import { getCosplaySuggestions } from '@/lib/entries';
 import { EntryForm } from '@/components/EntryForm';
 
 interface Props {
@@ -11,7 +12,10 @@ export const dynamic = 'force-dynamic';
 
 export default async function NewEntryPage({ params }: Props) {
   const { eventId } = await params;
-  const event = await getEventById(eventId);
+  const [event, suggestions] = await Promise.all([
+    getEventById(eventId),
+    getCosplaySuggestions().catch(() => ({ works: [], charactersByWork: {}, allCharacters: [] })),
+  ]);
   if (!event) notFound();
 
   return (
@@ -22,7 +26,7 @@ export default async function NewEntryPage({ params }: Props) {
         </Link>
       </div>
       <h1 className="text-xl font-bold text-gray-900 mb-6">参加表明フォーム</h1>
-      <EntryForm eventId={event.id} eventName={event.name} defaultDate={event.date} />
+      <EntryForm eventId={event.id} eventName={event.name} defaultDate={event.date} suggestions={suggestions} />
     </div>
   );
 }

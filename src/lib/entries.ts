@@ -84,6 +84,56 @@ export async function getRecentEntries(limit = 10): Promise<ParticipationEntry[]
   return (data as DBEntry[]).map(dbToEntry);
 }
 
+export interface CosplaySuggestions {
+  /** 登録済みの作品名（重複排除・五十音/出現順） */
+  works: string[];
+  /** 作品名ごとのキャラ名候補 */
+  charactersByWork: Record<string, string[]>;
+  /** 全キャラ名候補（作品未一致時のフォールバック） */
+  allCharacters: string[];
+}
+
+/** 既存のコスプレ参加表明から作品名・キャラ名のサジェスト候補を集計する */
+export async function getCosplaySuggestions(): Promise<CosplaySuggestions> {
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from('participation_entries')
+    .select('work_name, character_name')
+    .eq('participation_type', 'cosplay')
+    .eq('is_hidden', false);
+
+  if (error) {
+    console.error('getCosplaySuggestions failed:', error);
+    return { works: [], charactersByWork: {}, allCharacters: [] };
+  }
+
+  const works = new Set<string>();
+  const allCharacters = new Set<string>();
+  const charSetByWork = new Map<string, Set<string>>();
+
+  for (const row of (data ?? []) as { work_name: string | null; character_name: string | null }[]) {
+    const work = row.work_name?.trim();
+    const char = row.character_name?.trim();
+    if (work) works.add(work);
+    if (char) allCharacters.add(char);
+    if (work && char) {
+      if (!charSetByWork.has(work)) charSetByWork.set(work, new Set());
+      charSetByWork.get(work)!.add(char);
+    }
+  }
+
+  const charactersByWork: Record<string, string[]> = {};
+  for (const [work, set] of charSetByWork) {
+    charactersByWork[work] = [...set].sort((a, b) => a.localeCompare(b, 'ja'));
+  }
+
+  return {
+    works: [...works].sort((a, b) => a.localeCompare(b, 'ja')),
+    charactersByWork,
+    allCharacters: [...allCharacters].sort((a, b) => a.localeCompare(b, 'ja')),
+  };
+}
+
 export async function getEntriesByXId(xId: string): Promise<ParticipationEntry[]> {
   const supabase = createServerClient();
   const { data, error } = await supabase
