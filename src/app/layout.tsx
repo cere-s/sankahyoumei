@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Geist } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
 import { Header } from '@/components/Header';
 import { BetaBanner } from '@/components/BetaBanner';
 import './globals.css';
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <footer className="border-t border-gray-100 bg-white mt-12 py-6 text-center text-xs text-gray-400">
           コスプレ参加表明 — イベント参加をもっと楽しく
         </footer>
+        <Analytics />
       </body>
     </html>
   );
