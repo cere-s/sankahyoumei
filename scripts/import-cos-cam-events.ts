@@ -2,8 +2,10 @@
  * cos-cam.work からコスプレイベント一覧を取得して Supabase の events テーブルへ upsert するスクリプト
  *
  * 使い方:
- *   npm run import:cos-cam -- --dry-run   # DBへ書き込まず確認のみ
- *   npm run import:cos-cam                # 実際に upsert
+ *   npm run import:cos-cam -- --dry-run          # DBへ書き込まず確認のみ
+ *   npm run import:cos-cam -- --limit=3          # 先頭3件だけ登録（テスト用）
+ *   npm run import:cos-cam -- --limit=3 --dry-run
+ *   npm run import:cos-cam                       # 全件 upsert
  *
  * 必要な環境変数 (.env.local):
  *   NEXT_PUBLIC_SUPABASE_URL
@@ -23,6 +25,8 @@ const FETCH_UA = 'Mozilla/5.0 (compatible; CosplayEntryBot/1.0)';
 const DETAIL_FETCH_DELAY_MS = 1200;
 
 const isDryRun = process.argv.includes('--dry-run');
+const limitArg = process.argv.find((a) => a.startsWith('--limit='));
+const limit = limitArg ? parseInt(limitArg.split('=')[1]) : Infinity;
 
 // ---- 型定義 ----
 interface ImportedEvent {
@@ -271,9 +275,13 @@ async function main(): Promise<void> {
   }
 
   // 2. リストページ解析
-  const { events: listEvents, skipped } = parseListPage(listHtml);
+  const { events: allListEvents, skipped } = parseListPage(listHtml);
+  const listEvents = isFinite(limit) ? allListEvents.slice(0, limit) : allListEvents;
   console.log('');
-  console.log(`List parse: ${listEvents.length} 件有効 / ${skipped.length} 件スキップ`);
+  console.log(`List parse: ${allListEvents.length} 件有効 / ${skipped.length} 件スキップ`);
+  if (limit < allListEvents.length) {
+    console.log(`  → --limit=${limit} のため先頭 ${limit} 件のみ処理します`);
+  }
   if (skipped.length > 0) {
     skipped.forEach((s) => console.log(`  ⚠️  ${s.reason}: "${s.raw}"`));
   }

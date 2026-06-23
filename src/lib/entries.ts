@@ -71,6 +71,19 @@ function dbToEntry(row: DBEntry): ParticipationEntry {
   return entry;
 }
 
+export async function getRecentEntries(limit = 10): Promise<ParticipationEntry[]> {
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from('participation_entries')
+    .select('*')
+    .eq('is_hidden', false)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) throw new Error(`参加表明取得エラー: ${error.message}`);
+  return (data as DBEntry[]).map(dbToEntry);
+}
+
 export async function getEntriesByEventId(eventId: string): Promise<ParticipationEntry[]> {
   const supabase = createServerClient();
   const { data, error } = await supabase

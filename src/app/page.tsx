@@ -1,11 +1,16 @@
 import Link from 'next/link';
 import { getAllEvents } from '@/lib/events';
+import { getRecentEntries } from '@/lib/entries';
+import { EntryCard } from '@/components/EntryCard';
 import { formatDate } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
 export default async function TopPage() {
-  const events = await getAllEvents();
+  const [events, recentEntries] = await Promise.all([
+    getAllEvents(),
+    getRecentEntries(10).catch(() => []),
+  ]);
   const upcomingEvents = events.slice(0, 3);
 
   return (
@@ -33,22 +38,20 @@ export default async function TopPage() {
         </div>
       </section>
 
-      {/* Features */}
-      <section className="max-w-2xl mx-auto px-4 py-10">
-        <h2 className="text-base font-bold text-gray-800 mb-4">できること</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {[
-            { icon: '🔍', title: '検索できる', desc: '作品名・キャラ名・撮影スタンスで参加者を絞り込めます' },
-            { icon: '✏️', title: '表明できる', desc: 'コスプレ・カメラマン・一般参加を選んで情報を登録' },
-            { icon: '📋', title: 'X投稿できる', desc: '参加表明文をコピーしてXに貼り付けるだけ' },
-          ].map((f) => (
-            <div key={f.title} className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
-              <div className="text-2xl mb-2">{f.icon}</div>
-              <h3 className="font-bold text-sm text-gray-900 mb-1">{f.title}</h3>
-              <p className="text-xs text-gray-500 leading-relaxed">{f.desc}</p>
-            </div>
-          ))}
+      {/* Recent Entries */}
+      <section className="max-w-2xl mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-bold text-gray-800">新着の参加表明</h2>
         </div>
+        {recentEntries.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-8">まだ参加表明がありません</p>
+        ) : (
+          <div className="space-y-3">
+            {recentEntries.map((entry) => (
+              <EntryCard key={entry.id} entry={entry} eventId={entry.eventId} />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Upcoming Events */}
@@ -59,7 +62,7 @@ export default async function TopPage() {
         </div>
         {upcomingEvents.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-8">
-            イベントデータがありません。Supabaseのseed.sqlを実行してください。
+            イベントデータがありません
           </p>
         ) : (
           <div className="space-y-3">
@@ -73,9 +76,11 @@ export default async function TopPage() {
                         {formatDate(event.date)} · {event.location}
                       </p>
                     </div>
-                    <span className="text-xs bg-violet-50 text-violet-700 px-2 py-1 rounded-full shrink-0">
-                      #{event.hashtag}
-                    </span>
+                    {event.hashtag && (
+                      <span className="text-xs bg-violet-50 text-violet-700 px-2 py-1 rounded-full shrink-0">
+                        #{event.hashtag}
+                      </span>
+                    )}
                   </div>
                 </div>
               </Link>
