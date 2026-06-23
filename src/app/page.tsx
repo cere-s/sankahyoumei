@@ -39,64 +39,66 @@ export default async function TopPage() {
         </div>
       </section>
 
-      {/* Recent Entries */}
-      <section className="max-w-2xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-bold text-gray-800">新着の参加表明</h2>
-        </div>
-        {recentEntries.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-8">まだ参加表明がありません</p>
-        ) : (
-          <div className="space-y-3">
-            {recentEntries.map((entry) => {
-              const event = events.find((e) => e.id === entry.eventId);
-              return (
-                <EntryCard
-                  key={entry.id}
-                  entry={entry}
-                  eventId={entry.eventId}
-                  eventName={event?.name}
-                />
-              );
-            })}
+      <div className="max-w-5xl mx-auto px-4 py-8 grid gap-8 lg:grid-cols-3">
+        {/* Recent Entries */}
+        <section className="lg:col-span-2">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-bold text-gray-800">新着の参加表明</h2>
           </div>
-        )}
-      </section>
+          {recentEntries.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-8">まだ参加表明がありません</p>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {recentEntries.map((entry) => {
+                const event = events.find((e) => e.id === entry.eventId);
+                return (
+                  <EntryCard
+                    key={entry.id}
+                    entry={entry}
+                    eventId={entry.eventId}
+                    eventName={event?.name}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </section>
 
-      {/* Upcoming Events */}
-      <section className="max-w-2xl mx-auto px-4 pb-10">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-bold text-gray-800">開催予定のイベント</h2>
-          <Link href="/events" className="text-sm text-violet-600 hover:underline">すべて見る →</Link>
-        </div>
-        {upcomingEvents.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-8">
-            開催予定のイベントはありません
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {upcomingEvents.map((event) => (
-              <Link key={event.id} href={`/events/${event.id}`} className="block">
-                <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:shadow-md hover:border-violet-100 transition-all">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-bold text-gray-900 text-sm">{event.name}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {formatDate(event.date)} · {event.location}
-                      </p>
-                    </div>
-                    {event.hashtag && (
-                      <span className="text-xs bg-violet-50 text-violet-700 px-2 py-1 rounded-full shrink-0">
-                        #{event.hashtag}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </Link>
-            ))}
+        {/* Upcoming Events */}
+        <section className="lg:col-span-1">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-bold text-gray-800">開催予定のイベント</h2>
+            <Link href="/events" className="text-sm text-violet-600 hover:underline">すべて見る →</Link>
           </div>
-        )}
-      </section>
+          {upcomingEvents.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-8">
+              開催予定のイベントはありません
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {upcomingEvents.map((event) => (
+                <Link key={event.id} href={`/events/${event.id}`} className="block">
+                  <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:shadow-md hover:border-violet-100 transition-all">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-bold text-gray-900 text-sm">{event.name}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {formatDate(event.date)} · {event.location}
+                        </p>
+                      </div>
+                      {event.hashtag && (
+                        <span className="text-xs bg-violet-50 text-violet-700 px-2 py-1 rounded-full shrink-0">
+                          #{event.hashtag}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

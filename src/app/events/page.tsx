@@ -31,7 +31,7 @@ export default async function EventsPage({ searchParams }: Props) {
     : events;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
+    <div className="max-w-5xl mx-auto px-4 py-6">
       <h1 className="text-xl font-bold text-gray-900 mb-1">イベント一覧</h1>
       <p className="text-sm text-gray-500 mb-4">参加表明したいイベントを選んでください</p>
 
@@ -55,7 +55,7 @@ export default async function EventsPage({ searchParams }: Props) {
           {q && (
             <p className="text-xs text-gray-500 mb-3">{filtered.length} 件見つかりました</p>
           )}
-          <div className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((event) => (
               <EventCard key={event.id} event={event} />
             ))}

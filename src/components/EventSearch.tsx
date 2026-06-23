@@ -25,7 +25,7 @@ export function EventSearch({ defaultValue }: { defaultValue: string }) {
   );
 
   return (
-    <div className="relative mb-5">
+    <div className="relative mb-5 max-w-xl">
       <svg
         className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
         fill="none"

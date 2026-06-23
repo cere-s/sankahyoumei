@@ -8,8 +8,8 @@ interface Props {
 
 export function EventCard({ event }: Props) {
   return (
-    <Link href={`/events/${event.id}`} className="block">
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:shadow-md hover:border-violet-100 transition-all">
+    <Link href={`/events/${event.id}`} className="block h-full">
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:shadow-md hover:border-violet-100 transition-all h-full flex flex-col">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 flex-wrap">
@@ -30,7 +30,7 @@ export function EventCard({ event }: Props) {
           )}
         </div>
         <p className="mt-2 text-sm text-gray-600 line-clamp-2">{event.description}</p>
-        <p className="mt-3 text-xs text-violet-600 font-medium">参加者を見る →</p>
+        <p className="mt-auto pt-3 text-xs text-violet-600 font-medium">参加者を見る →</p>
       </div>
     </Link>
   );

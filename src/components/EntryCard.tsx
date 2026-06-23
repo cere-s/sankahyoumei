@@ -19,8 +19,8 @@ interface Props {
 
 export function EntryCard({ entry, eventId, eventName }: Props) {
   return (
-    <Link href={`/events/${eventId}/entries/${entry.id}`} className="block">
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:shadow-md hover:border-violet-100 transition-all">
+    <Link href={`/events/${eventId}/entries/${entry.id}`} className="block h-full">
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:shadow-md hover:border-violet-100 transition-all h-full flex flex-col">
         {eventName && (
           <p className="text-xs text-violet-600 font-medium mb-2">{eventName}</p>
         )}
@@ -101,7 +101,7 @@ export function EntryCard({ entry, eventId, eventName }: Props) {
           <p className="mt-2 text-sm text-gray-600 line-clamp-2">{entry.comment}</p>
         )}
 
-        <div className="mt-3 flex justify-end">
+        <div className="mt-auto pt-3 flex justify-end">
           <a
             href={`/participants/${encodeURIComponent(entry.xId)}`}
             className="text-xs text-violet-500 hover:underline"

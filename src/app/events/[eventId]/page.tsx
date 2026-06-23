@@ -21,9 +21,9 @@ export default async function EventDetailPage({ params }: Props) {
   if (!event) notFound();
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
+    <div className="max-w-5xl mx-auto px-4 py-6 grid gap-6 lg:grid-cols-3 lg:items-start">
       {/* イベント情報 */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-6">
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 lg:col-span-1 lg:sticky lg:top-20">
         <div className="flex items-start justify-between gap-2 mb-3">
           <h1 className="text-xl font-bold text-gray-900">{event.name}</h1>
           {event.hashtag && (
@@ -101,7 +101,9 @@ export default async function EventDetailPage({ params }: Props) {
         </Link>
       </div>
 
-      <ParticipantList entries={entries} eventId={eventId} />
+      <div className="lg:col-span-2">
+        <ParticipantList entries={entries} eventId={eventId} />
+      </div>
     </div>
   );
 }
