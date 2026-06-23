@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { ParticipationEntry } from '@/types';
 import {
   PARTICIPATION_TYPE_LABELS,
@@ -16,6 +19,8 @@ interface Props {
 }
 
 export function EntryCard({ entry, eventId, eventName }: Props) {
+  const router = useRouter();
+
   return (
     <Link href={`/events/${eventId}/entries/${entry.id}`} className="block">
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:shadow-md hover:border-violet-100 transition-all">
@@ -24,7 +29,15 @@ export function EntryCard({ entry, eventId, eventName }: Props) {
         )}
         <div className="flex items-start gap-2 flex-wrap">
           <span className="font-bold text-gray-900 text-sm">{entry.displayName}</span>
-          <span className="text-gray-400 text-xs self-center">@{entry.xId}</span>
+          <span
+            className="text-violet-500 text-xs self-center hover:underline cursor-pointer"
+            onClick={(e) => {
+              e.preventDefault();
+              router.push(`/participants/${encodeURIComponent(entry.xId)}`);
+            }}
+          >
+            @{entry.xId}
+          </span>
           <span
             className={`text-xs px-2 py-0.5 rounded-full font-medium ${
               PARTICIPATION_TYPE_COLORS[entry.participationType]
