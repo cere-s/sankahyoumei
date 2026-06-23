@@ -26,9 +26,9 @@ CREATE TABLE IF NOT EXISTS events (
 );
 
 -- 重複登録防止ユニーク制約
-CREATE UNIQUE INDEX IF NOT EXISTS events_source_external_id_unique
-  ON events (source_site, external_id)
-  WHERE external_id IS NOT NULL;
+ALTER TABLE events
+  ADD CONSTRAINT events_source_external_id_unique
+  UNIQUE (source_site, external_id);
 
 -- ---- 参加表明 ----
 CREATE TABLE IF NOT EXISTS participation_entries (

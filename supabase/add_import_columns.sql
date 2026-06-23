@@ -14,7 +14,8 @@ ALTER TABLE events
   ADD COLUMN IF NOT EXISTS address       TEXT,
   ADD COLUMN IF NOT EXISTS x_url         TEXT;
 
--- 重複登録防止ユニーク制約（外部IDがある場合のみ）
-CREATE UNIQUE INDEX IF NOT EXISTS events_source_external_id_unique
-  ON events (source_site, external_id)
-  WHERE external_id IS NOT NULL;
+-- 重複登録防止ユニーク制約
+-- ※ 既にインデックスがある場合は先に DROP INDEX IF EXISTS events_source_external_id_unique; を実行
+ALTER TABLE events
+  ADD CONSTRAINT IF NOT EXISTS events_source_external_id_unique
+  UNIQUE (source_site, external_id);
