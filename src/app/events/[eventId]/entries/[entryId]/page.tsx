@@ -46,10 +46,22 @@ export default async function EntryDetailPage({ params }: Props) {
             {PARTICIPATION_TYPE_LABELS[entry.participationType]}
           </span>
         </div>
-        <Link href={`/participants/${encodeURIComponent(entry.xId)}`}
-          className="text-sm text-violet-500 hover:underline mb-4 inline-block">
-          @{entry.xId}
-        </Link>
+        <div className="flex items-center gap-3 mb-4">
+          <a
+            href={`https://x.com/${entry.xId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-gray-400 hover:text-violet-500 hover:underline"
+          >
+            @{entry.xId}
+          </a>
+          <Link
+            href={`/participants/${encodeURIComponent(entry.xId)}`}
+            className="text-xs text-violet-500 hover:underline"
+          >
+            参加イベント一覧 →
+          </Link>
+        </div>
 
         <dl className="space-y-2 text-sm">
           <div className="flex gap-2">

@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import type { ParticipationEntry } from '@/types';
 import {
   PARTICIPATION_TYPE_LABELS,
@@ -19,8 +18,6 @@ interface Props {
 }
 
 export function EntryCard({ entry, eventId, eventName }: Props) {
-  const router = useRouter();
-
   return (
     <Link href={`/events/${eventId}/entries/${entry.id}`} className="block">
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:shadow-md hover:border-violet-100 transition-all">
@@ -29,15 +26,15 @@ export function EntryCard({ entry, eventId, eventName }: Props) {
         )}
         <div className="flex items-start gap-2 flex-wrap">
           <span className="font-bold text-gray-900 text-sm">{entry.displayName}</span>
-          <span
-            className="text-violet-500 text-xs self-center hover:underline cursor-pointer"
-            onClick={(e) => {
-              e.preventDefault();
-              router.push(`/participants/${encodeURIComponent(entry.xId)}`);
-            }}
+          <a
+            href={`https://x.com/${entry.xId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-gray-400 text-xs self-center hover:text-violet-500 hover:underline"
+            onClick={(e) => e.stopPropagation()}
           >
             @{entry.xId}
-          </span>
+          </a>
           <span
             className={`text-xs px-2 py-0.5 rounded-full font-medium ${
               PARTICIPATION_TYPE_COLORS[entry.participationType]
@@ -103,6 +100,16 @@ export function EntryCard({ entry, eventId, eventName }: Props) {
         {entry.comment && (
           <p className="mt-2 text-sm text-gray-600 line-clamp-2">{entry.comment}</p>
         )}
+
+        <div className="mt-3 flex justify-end">
+          <a
+            href={`/participants/${encodeURIComponent(entry.xId)}`}
+            className="text-xs text-violet-500 hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            参加イベント一覧 →
+          </a>
+        </div>
       </div>
     </Link>
   );
