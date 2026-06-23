@@ -26,9 +26,11 @@ export default async function EventDetailPage({ params }: Props) {
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-6">
         <div className="flex items-start justify-between gap-2 mb-3">
           <h1 className="text-xl font-bold text-gray-900">{event.name}</h1>
-          <span className="text-xs bg-violet-50 text-violet-700 px-2 py-1 rounded-full shrink-0 font-medium">
-            #{event.hashtag}
-          </span>
+          {event.hashtag && (
+            <span className="text-xs bg-violet-50 text-violet-700 px-2 py-1 rounded-full shrink-0 font-medium">
+              #{event.hashtag}
+            </span>
+          )}
         </div>
         <dl className="space-y-1.5 text-sm text-gray-600 mb-4">
           <div className="flex gap-2">

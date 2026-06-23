@@ -3,6 +3,19 @@ import { getEntryById, updateEntry, hideEntry } from '@/lib/entries';
 
 type Params = Promise<{ entryId: string }>;
 
+/** 権限・存在エラーは利用者向けメッセージを返し、それ以外は内部詳細を隠して 500 を返す */
+function errorResponse(e: unknown, context: string) {
+  const msg = String(e);
+  if (msg.includes('権限')) {
+    return NextResponse.json({ error: msg.replace(/^Error:\s*/, '') }, { status: 403 });
+  }
+  if (msg.includes('見つかりません')) {
+    return NextResponse.json({ error: msg.replace(/^Error:\s*/, '') }, { status: 404 });
+  }
+  console.error(`${context} failed:`, e);
+  return NextResponse.json({ error: '処理に失敗しました' }, { status: 500 });
+}
+
 export async function GET(_req: NextRequest, { params }: { params: Params }) {
   const { entryId } = await params;
   try {
@@ -10,7 +23,8 @@ export async function GET(_req: NextRequest, { params }: { params: Params }) {
     if (!entry) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json(entry);
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 });
+    console.error('GET /api/entries/[entryId] failed:', e);
+    return NextResponse.json({ error: '参加表明の取得に失敗しました' }, { status: 500 });
   }
 }
 
@@ -37,9 +51,7 @@ export async function PUT(request: NextRequest, { params }: { params: Params }) 
     });
     return NextResponse.json(updated);
   } catch (e) {
-    const msg = String(e);
-    const status = msg.includes('権限') ? 403 : msg.includes('見つかりません') ? 404 : 500;
-    return NextResponse.json({ error: msg }, { status });
+    return errorResponse(e, 'PUT /api/entries/[entryId]');
   }
 }
 
@@ -60,8 +72,6 @@ export async function DELETE(request: NextRequest, { params }: { params: Params 
     await hideEntry(entryId, String(body.token));
     return NextResponse.json({ success: true });
   } catch (e) {
-    const msg = String(e);
-    const status = msg.includes('権限') ? 403 : msg.includes('見つかりません') ? 404 : 500;
-    return NextResponse.json({ error: msg }, { status });
+    return errorResponse(e, 'DELETE /api/entries/[entryId]');
   }
 }

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { getAllEvents } from '@/lib/events';
 import { getRecentEntries } from '@/lib/entries';
 import { EntryCard } from '@/components/EntryCard';
-import { formatDate } from '@/lib/utils';
+import { formatDate, todayISO } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +11,8 @@ export default async function TopPage() {
     getAllEvents(),
     getRecentEntries(10).catch(() => []),
   ]);
-  const upcomingEvents = events.slice(0, 3);
+  const today = todayISO();
+  const upcomingEvents = events.filter((e) => e.date >= today).slice(0, 3);
 
   return (
     <div>
@@ -70,7 +71,7 @@ export default async function TopPage() {
         </div>
         {upcomingEvents.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-8">
-            イベントデータがありません
+            開催予定のイベントはありません
           </p>
         ) : (
           <div className="space-y-3">

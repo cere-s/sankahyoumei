@@ -11,7 +11,8 @@ export async function GET(request: NextRequest) {
     const entries = await getEntriesByEventId(eventId);
     return NextResponse.json(entries);
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 });
+    console.error('GET /api/entries failed:', e);
+    return NextResponse.json({ error: '参加表明の取得に失敗しました' }, { status: 500 });
   }
 }
 
@@ -45,7 +46,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result, { status: 201 });
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 });
+    console.error('POST /api/entries failed:', e);
+    return NextResponse.json({ error: '参加表明の作成に失敗しました' }, { status: 500 });
   }
 }
 

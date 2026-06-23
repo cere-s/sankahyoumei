@@ -7,7 +7,7 @@ import type {
   CreateEntryResult,
 } from '@/types';
 import { createServerClient, createAdminClient } from './supabase/server';
-import { generateToken, hashToken } from './token';
+import { generateToken, hashToken, verifyToken } from './token';
 
 interface DBEntry {
   id: string;
@@ -198,7 +198,7 @@ export async function updateEntry(
     .single();
 
   if (fetchError || !existing) throw new Error('参加表明が見つかりません');
-  if ((existing as { edit_token_hash: string }).edit_token_hash !== hashToken(input.token)) {
+  if (!verifyToken(input.token, (existing as { edit_token_hash: string }).edit_token_hash)) {
     throw new Error('編集権限がありません');
   }
 
@@ -243,7 +243,7 @@ export async function hideEntry(entryId: string, token: string): Promise<void> {
     .single();
 
   if (fetchError || !existing) throw new Error('参加表明が見つかりません');
-  if ((existing as { edit_token_hash: string }).edit_token_hash !== hashToken(token)) {
+  if (!verifyToken(token, (existing as { edit_token_hash: string }).edit_token_hash)) {
     throw new Error('削除権限がありません');
   }
 

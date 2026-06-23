@@ -16,7 +16,7 @@ interface Props {
 
 function buildShareText(entry: ParticipationEntry, event: Event, origin: string): string {
   const lines: string[] = [
-    `#${event.hashtag} 参加表明`,
+    event.hashtag ? `#${event.hashtag} 参加表明` : `${event.name} 参加表明`,
     '',
     `参加日：${formatDate(entry.participationDate)}`,
     `参加種別：${PARTICIPATION_TYPE_LABELS[entry.participationType]}`,
