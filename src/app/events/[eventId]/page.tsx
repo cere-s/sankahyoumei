@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { getEventById } from '@/lib/events';
 import { getEntriesByEventId } from '@/lib/entries';
 import { ParticipantList } from '@/components/ParticipantList';
+import { ParticipationNotice } from '@/components/ParticipationNotice';
 import { formatDate } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
@@ -108,6 +109,7 @@ export default async function EventDetailPage({ params }: Props) {
       </div>
 
       <div className="lg:col-span-2">
+        <ParticipationNotice className="mb-4" />
         <ParticipantList entries={entries} eventId={eventId} />
       </div>
     </div>

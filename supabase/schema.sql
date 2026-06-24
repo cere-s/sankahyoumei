@@ -65,10 +65,13 @@ CREATE TABLE IF NOT EXISTS participation_entries (
   edit_token_hash     TEXT,
   delete_password_hash TEXT,
 
-  -- 将来の拡張用
-  user_id     UUID,                      -- 将来ログイン機能追加時に使用
-  is_verified_x BOOLEAN DEFAULT FALSE,   -- X本人確認（将来実装）
-  is_hidden   BOOLEAN DEFAULT FALSE,     -- 削除フラグ（物理削除の代替）
+  -- Xログイン連携
+  user_id     UUID REFERENCES auth.users(id) ON DELETE SET NULL,  -- Xログインユーザー
+  x_user_id          TEXT,                       -- X provider user id（スナップショット）
+  x_username_snapshot TEXT,                       -- 作成時点のXユーザー名
+  auth_status TEXT NOT NULL DEFAULT 'unverified', -- verified_x | unverified | legacy_token | hidden
+  is_verified_x BOOLEAN DEFAULT FALSE,            -- 旧ツイート照合フラグ（互換のため残置）
+  is_hidden   BOOLEAN DEFAULT FALSE,              -- 削除フラグ（物理削除の代替）
 
   created_at  TIMESTAMPTZ DEFAULT NOW(),
   updated_at  TIMESTAMPTZ DEFAULT NOW()
@@ -112,10 +115,55 @@ CREATE POLICY "entries_public_select"
   ON participation_entries FOR SELECT
   USING (is_hidden = false);
 
--- participation_entries: 全員が新規作成可能（ログインなしMVP）
-CREATE POLICY "entries_public_insert"
+-- participation_entries: ログインユーザーは自分名義（user_id = auth.uid()）の参加表明を作成可能
+CREATE POLICY "entries_auth_insert"
   ON participation_entries FOR INSERT
-  WITH CHECK (true);
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
 
--- UPDATE / DELETE は RLS では許可しない
--- → サーバーサイドで edit_token_hash を検証してから service_role で実行する
+-- participation_entries: ログインユーザーは自分の参加表明のみ更新可能
+CREATE POLICY "entries_owner_update"
+  ON participation_entries FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- 旧トークン方式の作成・編集・削除は service_role でサーバー側検証後に実行する（RLSバイパス）
+
+-- ============================================================
+-- profiles（Xログインユーザー情報）
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS profiles (
+  id             UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  x_user_id      TEXT UNIQUE,
+  x_username     TEXT,
+  x_display_name TEXT,
+  x_avatar_url   TEXT,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TRIGGER trg_profiles_updated_at
+  BEFORE UPDATE ON profiles
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+-- profiles: 公開表示に必要な情報のみ全員が読み取り可能
+--（保持しているのは公開Xプロフィール項目のみ。トークン等の秘密情報は保存しない）
+CREATE POLICY "profiles_public_select"
+  ON profiles FOR SELECT
+  USING (true);
+
+-- profiles: 本人のみ作成・更新可能
+CREATE POLICY "profiles_owner_insert"
+  ON profiles FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "profiles_owner_update"
+  ON profiles FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);

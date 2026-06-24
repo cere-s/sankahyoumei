@@ -8,6 +8,7 @@ import type {
   PhotographerFirstMeetStatus,
   PhotographerShootingStyle,
   CreateEntryResult,
+  Profile,
 } from '@/types';
 import type { CosplaySuggestions } from '@/lib/entries';
 import {
@@ -22,6 +23,8 @@ interface Props {
   eventName: string;
   defaultDate: string;
   suggestions?: CosplaySuggestions;
+  /** Xログイン済みプロフィール（X IDは手入力させず、ここから自動設定する） */
+  profile: Profile;
 }
 
 const EMPTY_SUGGESTIONS: CosplaySuggestions = { works: [], charactersByWork: {}, allCharacters: [] };
@@ -116,13 +119,15 @@ function SuccessView({
   );
 }
 
-export function EntryForm({ eventId, eventName, defaultDate, suggestions = EMPTY_SUGGESTIONS }: Props) {
+export function EntryForm({ eventId, eventName, defaultDate, suggestions = EMPTY_SUGGESTIONS, profile }: Props) {
   const [formState, setFormState] = useState<FormState>('input');
   const [createdData, setCreatedData] = useState<{ entryId: string; editToken: string } | null>(null);
 
+  // X IDはログイン中のXユーザー名で固定（手入力不可）
+  const xId = profile.xUsername ?? '';
+
   const [participationType, setParticipationType] = useState<ParticipationType>('cosplay');
   const [displayName, setDisplayName] = useState('');
-  const [xId, setXId] = useState('');
   const [participationDate, setParticipationDate] = useState(defaultDate);
   const [comment, setComment] = useState('');
   const [imageUrl, setImageUrl] = useState('');
@@ -168,7 +173,6 @@ export function EntryForm({ eventId, eventName, defaultDate, suggestions = EMPTY
   function validate(): boolean {
     const e: FormErrors = {};
     if (!displayName.trim()) e.displayName = '表示名を入力してください';
-    if (!xId.trim()) e.xId = 'X IDを入力してください';
     if (!participationDate) e.participationDate = '参加日を入力してください';
     if (participationType === 'cosplay') {
       if (!workName.trim()) e.workName = '作品名を入力してください';
@@ -266,12 +270,20 @@ export function EntryForm({ eventId, eventName, defaultDate, suggestions = EMPTY
             placeholder="例：レムコス花子" className={inputClass} />
         </Field>
 
-        <Field label="X ID" required error={errors.xId}>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
-            <input type="text" value={xId} onChange={(e) => setXId(e.target.value)}
-              placeholder="your_x_id" className={`${inputClass} pl-7`} />
+        <Field label="X ID（Xログイン済み）">
+          <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5">
+            {profile.xAvatarUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={profile.xAvatarUrl} alt="" className="w-6 h-6 rounded-full" />
+            )}
+            <span className="text-sm font-medium text-gray-800">@{xId}</span>
+            <span className="ml-auto inline-flex items-center gap-1 text-xs text-sky-700 bg-sky-50 border border-sky-200 px-2 py-0.5 rounded-full">
+              Xログイン確認済み
+            </span>
           </div>
+          <p className="mt-1 text-xs text-gray-400">
+            ログイン中のXアカウントが使用されます。手入力はできません。
+          </p>
         </Field>
 
         <Field label="参加日" required error={errors.participationDate}>

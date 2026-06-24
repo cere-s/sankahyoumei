@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getEventById } from '@/lib/events';
 import { getEntryById, getCosplaySuggestions } from '@/lib/entries';
+import { getCurrentUser } from '@/lib/auth';
 import { EditEntryForm } from '@/components/EditEntryForm';
 
 export const dynamic = 'force-dynamic';
@@ -15,29 +16,31 @@ export default async function EditEntryPage({ params, searchParams }: Props) {
   const { eventId, entryId } = await params;
   const { token } = await searchParams;
 
-  if (!token) {
+  const [event, entry, suggestions, user] = await Promise.all([
+    getEventById(eventId),
+    getEntryById(entryId),
+    getCosplaySuggestions().catch(() => ({ works: [], charactersByWork: {}, allCharacters: [] })),
+    getCurrentUser(),
+  ]);
+
+  if (!event || !entry) notFound();
+
+  // 認可: 編集トークンがある、またはログイン本人（user_id一致）
+  const isOwner = Boolean(user && entry.userId && user.id === entry.userId);
+  if (!token && !isOwner) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-12 text-center">
         <p className="text-2xl mb-3">🔒</p>
-        <h1 className="text-lg font-bold text-gray-900 mb-2">編集URLが無効です</h1>
+        <h1 className="text-lg font-bold text-gray-900 mb-2">編集できません</h1>
         <p className="text-sm text-gray-500 mb-6">
-          参加表明作成時に発行された編集URLからアクセスしてください。
+          この参加表明を作成したXアカウントでログインするか、作成時に発行された編集URLからアクセスしてください。
         </p>
-        <Link href={`/events/${eventId}`}
-          className="text-sm text-violet-600 hover:underline">
+        <Link href={`/events/${eventId}`} className="text-sm text-violet-600 hover:underline">
           ← イベントページへ戻る
         </Link>
       </div>
     );
   }
-
-  const [event, entry, suggestions] = await Promise.all([
-    getEventById(eventId),
-    getEntryById(entryId),
-    getCosplaySuggestions().catch(() => ({ works: [], charactersByWork: {}, allCharacters: [] })),
-  ]);
-
-  if (!event || !entry) notFound();
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
@@ -51,7 +54,7 @@ export default async function EditEntryPage({ params, searchParams }: Props) {
       <p className="text-sm text-gray-500 mb-6">
         {event.name} — {entry.displayName}
       </p>
-      <EditEntryForm entry={entry} event={event} editToken={token} suggestions={suggestions} />
+      <EditEntryForm entry={entry} event={event} editToken={token ?? ''} suggestions={suggestions} />
     </div>
   );
 }

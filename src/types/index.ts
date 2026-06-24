@@ -52,6 +52,18 @@ export interface PhotographerInfo {
   shootingStyles: PhotographerShootingStyle[];
 }
 
+/** 参加表明の認証状態 */
+export type AuthStatus = 'verified_x' | 'unverified' | 'legacy_token' | 'hidden';
+
+/** Xログインユーザーのプロフィール（profiles テーブル） */
+export interface Profile {
+  id: string;
+  xUserId?: string;
+  xUsername?: string;
+  xDisplayName?: string;
+  xAvatarUrl?: string;
+}
+
 export interface ParticipationEntry {
   id: string;
   eventId: string;
@@ -64,6 +76,10 @@ export interface ParticipationEntry {
   imageUrl?: string;
   tweetUrl?: string;
   isVerifiedX?: boolean;
+  userId?: string;
+  xUserId?: string;
+  xUsernameSnapshot?: string;
+  authStatus: AuthStatus;
   cosplayInfo?: CosplayInfo;
   photographerInfo?: PhotographerInfo;
   createdAt: string;

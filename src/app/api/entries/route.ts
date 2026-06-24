@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createEntry, getEntriesByEventId } from '@/lib/entries';
+import { getCurrentAuth } from '@/lib/auth';
 import type { ParticipationType, ParticipationEntry } from '@/types';
 
 export async function GET(request: NextRequest) {
@@ -24,8 +25,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '不正なリクエストです' }, { status: 400 });
   }
 
-  const { eventId, displayName, xId, participationType, participationDate } = body;
-  if (!eventId || !displayName || !xId || !participationType || !participationDate) {
+  // なりすまし防止：新規作成はXログイン必須。X IDはログイン情報から確定する
+  const { user, profile } = await getCurrentAuth();
+  if (!user) {
+    return NextResponse.json({ error: 'Xログインが必要です' }, { status: 401 });
+  }
+  const xId = profile?.xUsername;
+  if (!xId) {
+    return NextResponse.json(
+      { error: 'Xユーザー名を取得できませんでした。一度ログアウトして再度Xログインしてください。' },
+      { status: 400 }
+    );
+  }
+
+  const { eventId, displayName, participationType, participationDate } = body;
+  if (!eventId || !displayName || !participationType || !participationDate) {
     return NextResponse.json({ error: '必須項目が入力されていません' }, { status: 400 });
   }
 
@@ -33,7 +47,7 @@ export async function POST(request: NextRequest) {
     const result = await createEntry({
       eventId: String(eventId),
       displayName: String(displayName).trim(),
-      xId: String(xId).trim().replace(/^@/, ''),
+      xId, // 手入力ではなくログイン中のXユーザー名を使用
       participationType: String(participationType) as ParticipationType,
       participationDate: String(participationDate),
       comment: String(body.comment ?? '').trim(),
@@ -43,6 +57,9 @@ export async function POST(request: NextRequest) {
       deletePassword: body.deletePassword ? String(body.deletePassword) : undefined,
       cosplayInfo: body.cosplayInfo as ParticipationEntry['cosplayInfo'] | undefined,
       photographerInfo: body.photographerInfo as ParticipationEntry['photographerInfo'] | undefined,
+      userId: user.id,
+      xUserId: profile?.xUserId,
+      xUsernameSnapshot: profile?.xUsername,
     });
 
     return NextResponse.json(result, { status: 201 });

@@ -6,7 +6,7 @@ import type {
   PhotographerShootingStyle,
   CreateEntryResult,
 } from '@/types';
-import { createServerClient, createAdminClient } from './supabase/server';
+import { createServerClient, createAdminClient, createAuthServerClient } from './supabase/server';
 import { generateToken, hashToken, verifyToken } from './token';
 import { verifyTweetForXId } from './tweet';
 
@@ -32,6 +32,9 @@ interface DBEntry {
   edit_token_hash: string | null;
   delete_password_hash: string | null;
   user_id: string | null;
+  x_user_id: string | null;
+  x_username_snapshot: string | null;
+  auth_status: string | null;
   is_verified_x: boolean;
   is_hidden: boolean;
   created_at: string;
@@ -51,6 +54,10 @@ function dbToEntry(row: DBEntry): ParticipationEntry {
     imageUrl: row.image_url ?? undefined,
     tweetUrl: row.tweet_url ?? undefined,
     isVerifiedX: row.is_verified_x ?? false,
+    userId: row.user_id ?? undefined,
+    xUserId: row.x_user_id ?? undefined,
+    xUsernameSnapshot: row.x_username_snapshot ?? undefined,
+    authStatus: (row.auth_status as ParticipationEntry['authStatus']) ?? 'unverified',
     createdAt: row.created_at,
   };
 
@@ -210,10 +217,15 @@ export interface CreateEntryInput {
   deletePassword?: string;
   cosplayInfo?: ParticipationEntry['cosplayInfo'];
   photographerInfo?: ParticipationEntry['photographerInfo'];
+  // Xログイン由来（必須：なりすまし防止のためログイン必須）
+  userId: string;
+  xUserId?: string;
+  xUsernameSnapshot?: string;
 }
 
 export async function createEntry(input: CreateEntryInput): Promise<CreateEntryResult> {
-  const supabase = createServerClient();
+  // 本人のセッションで insert（RLS: auth.uid() = user_id を満たす）
+  const supabase = await createAuthServerClient();
   const editToken = generateToken();
 
   // ツイートURLがあれば「投稿者 = X ID」を検証
@@ -237,6 +249,10 @@ export async function createEntry(input: CreateEntryInput): Promise<CreateEntryR
     image_url: input.imageUrl || null,
     tweet_url: tweetUrl,
     is_verified_x: isVerifiedX,
+    user_id: input.userId,
+    x_user_id: input.xUserId ?? null,
+    x_username_snapshot: input.xUsernameSnapshot ?? null,
+    auth_status: 'verified_x',
     edit_token_hash: hashToken(editToken),
     delete_password_hash: input.deletePassword ? hashToken(input.deletePassword) : null,
     // cosplay
@@ -264,7 +280,10 @@ export async function createEntry(input: CreateEntryInput): Promise<CreateEntryR
 }
 
 export interface UpdateEntryInput {
-  token: string;
+  /** 旧トークン方式の編集用（任意） */
+  token?: string;
+  /** ログイン中ユーザーのID（本人編集の判定用） */
+  authUserId?: string | null;
   comment?: string;
   participationDate?: string;
   /** 空文字なら埋め込み解除、未指定なら変更なし */
@@ -279,16 +298,20 @@ export async function updateEntry(
 ): Promise<ParticipationEntry> {
   const admin = createAdminClient();
 
-  // トークン検証（投稿者ハンドルもツイート検証用に取得）
+  // 既存行を取得（編集権限の判定とツイート検証に使用）
   const { data: existing, error: fetchError } = await admin
     .from('participation_entries')
-    .select('edit_token_hash, x_id')
+    .select('edit_token_hash, x_id, user_id')
     .eq('id', entryId)
     .single();
 
   if (fetchError || !existing) throw new Error('参加表明が見つかりません');
-  const existingRow = existing as { edit_token_hash: string; x_id: string };
-  if (!verifyToken(input.token, existingRow.edit_token_hash)) {
+  const existingRow = existing as { edit_token_hash: string | null; x_id: string; user_id: string | null };
+
+  // 認可: ログイン本人（user_id一致）または 有効な編集トークン
+  const ownerMatch = Boolean(input.authUserId && existingRow.user_id && input.authUserId === existingRow.user_id);
+  const tokenMatch = Boolean(input.token && verifyToken(input.token, existingRow.edit_token_hash));
+  if (!ownerMatch && !tokenMatch) {
     throw new Error('編集権限がありません');
   }
 
@@ -334,23 +357,29 @@ export async function updateEntry(
   return dbToEntry(data as DBEntry);
 }
 
-export async function hideEntry(entryId: string, token: string): Promise<void> {
+export async function hideEntry(
+  entryId: string,
+  opts: { token?: string; authUserId?: string | null }
+): Promise<void> {
   const admin = createAdminClient();
 
   const { data: existing, error: fetchError } = await admin
     .from('participation_entries')
-    .select('edit_token_hash')
+    .select('edit_token_hash, user_id')
     .eq('id', entryId)
     .single();
 
   if (fetchError || !existing) throw new Error('参加表明が見つかりません');
-  if (!verifyToken(token, (existing as { edit_token_hash: string }).edit_token_hash)) {
+  const existingRow = existing as { edit_token_hash: string | null; user_id: string | null };
+  const ownerMatch = Boolean(opts.authUserId && existingRow.user_id && opts.authUserId === existingRow.user_id);
+  const tokenMatch = Boolean(opts.token && verifyToken(opts.token, existingRow.edit_token_hash));
+  if (!ownerMatch && !tokenMatch) {
     throw new Error('削除権限がありません');
   }
 
   const { error } = await admin
     .from('participation_entries')
-    .update({ is_hidden: true, updated_at: new Date().toISOString() })
+    .update({ is_hidden: true, auth_status: 'hidden', updated_at: new Date().toISOString() })
     .eq('id', entryId);
 
   if (error) throw new Error(`削除エラー: ${error.message}`);

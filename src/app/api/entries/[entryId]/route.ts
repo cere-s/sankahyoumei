@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getEntryById, updateEntry, hideEntry } from '@/lib/entries';
+import { getCurrentUser } from '@/lib/auth';
 
 type Params = Promise<{ entryId: string }>;
 
@@ -40,13 +41,15 @@ export async function PUT(request: NextRequest, { params }: { params: Params }) 
     return NextResponse.json({ error: '不正なリクエストです' }, { status: 400 });
   }
 
-  if (!body.token) {
-    return NextResponse.json({ error: '編集トークンが必要です' }, { status: 400 });
+  const user = await getCurrentUser();
+  if (!body.token && !user) {
+    return NextResponse.json({ error: '編集にはXログインまたは編集トークンが必要です' }, { status: 400 });
   }
 
   try {
     const updated = await updateEntry(entryId, {
-      token: String(body.token),
+      token: body.token ? String(body.token) : undefined,
+      authUserId: user?.id ?? null,
       comment: body.comment !== undefined ? String(body.comment) : undefined,
       participationDate: body.participationDate ? String(body.participationDate) : undefined,
       tweetUrl: body.tweetUrl !== undefined ? String(body.tweetUrl) : undefined,
@@ -68,12 +71,16 @@ export async function DELETE(request: NextRequest, { params }: { params: Params 
     return NextResponse.json({ error: '不正なリクエストです' }, { status: 400 });
   }
 
-  if (!body.token) {
-    return NextResponse.json({ error: '編集トークンが必要です' }, { status: 400 });
+  const user = await getCurrentUser();
+  if (!body.token && !user) {
+    return NextResponse.json({ error: '削除にはXログインまたは編集トークンが必要です' }, { status: 400 });
   }
 
   try {
-    await hideEntry(entryId, String(body.token));
+    await hideEntry(entryId, {
+      token: body.token ? String(body.token) : undefined,
+      authUserId: user?.id ?? null,
+    });
     return NextResponse.json({ success: true });
   } catch (e) {
     return errorResponse(e, 'DELETE /api/entries/[entryId]');

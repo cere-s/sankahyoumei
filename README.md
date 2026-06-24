@@ -153,3 +153,55 @@ npm run import:cos-cam
 - 編集URLは作成直後の画面でのみ表示されます。保存し忘れた場合は再発行不可です
 - X IDの本人確認は行っていません
 - 参加表明は撮影許可を意味しません
+
+---
+
+## Xログイン機能（なりすまし防止）
+
+参加表明の作成には **X（Twitter）ログイン** を必須にしています。Supabase Auth の X / Twitter OAuth 2.0 を利用し、ログイン中のXアカウント名で「Xログイン確認済み」の参加表明を作成できます。
+
+> **「Xログイン確認済み」と「本人確認済み」は異なります。**
+> 「Xログイン確認済み」は、そのXアカウントでログインして作成されたことのみを示します。実在の人物や身元、撮影許可を保証するものではありません。表示文言は必ず「Xログイン確認済み」を使用してください。
+
+### 仕組み / X API 課金を抑える設計
+
+- Xの情報は**ログイン時に1回だけ** Supabase Auth の metadata から取得し、`profiles` テーブルに保存します。
+- 一覧・詳細表示では `profiles` / `participation_entries` に保存済みの情報のみを使用し、**ページ表示ごとにX APIを叩きません**。
+- X投稿・投稿取得・フォロー・DM・いいねの取得は行いません（Read only）。
+- 利用量は X Developer Console の **Usage / Billing** で確認してください。
+
+### X Developer Console の設定
+
+1. [developer.x.com](https://developer.x.com) でアプリを作成
+2. **User authentication settings** を編集
+   - **App type: Web App**
+   - **App permissions: Read only**（Write / DM 権限は不要）
+   - **Type of App: OAuth 2.0**（OAuth 1.0a は使わない）
+3. **Callback URI / Redirect URL** に Supabase のコールバックURLを登録
+   - `https://<your-project-ref>.supabase.co/auth/v1/callback`
+   - ※ **完全一致**が必要です（末尾スラッシュやスキームの違いに注意）
+4. **Website URL / Terms of service / Privacy policy** を設定
+   - Terms: `https://<your-domain>/terms`
+   - Privacy: `https://<your-domain>/privacy`
+5. **Client ID / Client Secret** を控える
+
+### Supabase の設定
+
+1. **Authentication → Providers → Twitter (X)** を有効化
+2. X Developer Console で取得した **Client ID / Client Secret** を登録
+   - Client Secret は Supabase Dashboard にのみ保存し、**Next.js / Vercel の環境変数には置かない**でください
+3. **Authentication → URL Configuration**
+   - Site URL に本番URL（例 `https://<your-domain>`）
+   - Redirect URLs に `https://<your-domain>/auth/callback`（ローカル開発時は `http://localhost:3000/auth/callback` も追加）
+4. DB マイグレーションを実行（Supabase SQL Editor）
+   - 新規: `supabase/schema.sql`
+   - 既存DB: `supabase/add_auth.sql`（profiles 作成・entries カラム追加・RLS 更新）
+
+### 動作確認
+
+```bash
+npm run lint
+npm run build
+```
+
+ローカル開発時は OAuth の redirect URL がローカルを指すため、Supabase の Redirect URLs に localhost を追加しておく必要があります。可能であれば **Vercel 本番URL でも**ログインをテストしてください。

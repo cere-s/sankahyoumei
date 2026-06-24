@@ -1,16 +1,21 @@
 'use client';
 
-import { createClient as _createClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
 
-let _instance: ReturnType<typeof _createClient> | null = null;
+let _instance: ReturnType<typeof createBrowserClient> | null = null;
 
-/** ブラウザ用 Supabase クライアント（将来の認証対応用に用意） */
+function publicKey(): string {
+  return (
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+    ''
+  );
+}
+
+/** ブラウザ用 Supabase クライアント（Cookie でセッション共有） */
 export function createClient() {
   if (!_instance) {
-    _instance = _createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+    _instance = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, publicKey());
   }
   return _instance;
 }

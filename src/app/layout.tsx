@@ -27,7 +27,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <p>
             本サービスの利用により生じた損害・トラブルについて運営者は一切の責任を負いません。
           </p>
-          <p className="flex items-center justify-center gap-3">
+          <p className="flex items-center justify-center gap-3 flex-wrap">
+            <Link href="/terms" className="text-gray-500 hover:text-violet-600 hover:underline">
+              利用規約
+            </Link>
+            <span className="text-gray-300">·</span>
+            <Link href="/privacy" className="text-gray-500 hover:text-violet-600 hover:underline">
+              プライバシーポリシー
+            </Link>
+            <span className="text-gray-300">·</span>
             <Link href="/disclaimer" className="text-gray-500 hover:text-violet-600 hover:underline">
               免責事項
             </Link>

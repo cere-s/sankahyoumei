@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import type { ParticipationEntry } from '@/types';
+import { AuthStatusBadge } from './AuthStatus';
 import {
   PARTICIPATION_TYPE_LABELS,
   PARTICIPATION_TYPE_COLORS,
@@ -42,6 +43,7 @@ export function EntryCard({ entry, eventId, eventName }: Props) {
           >
             {PARTICIPATION_TYPE_LABELS[entry.participationType]}
           </span>
+          <AuthStatusBadge status={entry.authStatus} />
         </div>
 
         {entry.cosplayInfo && (

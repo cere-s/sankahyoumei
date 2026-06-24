@@ -5,6 +5,8 @@ import { getEntryById } from '@/lib/entries';
 import { ShareTextButton } from '@/components/ShareTextButton';
 import { ReportButton } from '@/components/ReportButton';
 import { TweetEmbed } from '@/components/TweetEmbed';
+import { AuthStatusNotice } from '@/components/AuthStatus';
+import { ParticipationNotice } from '@/components/ParticipationNotice';
 import {
   PARTICIPATION_TYPE_LABELS,
   PARTICIPATION_TYPE_COLORS,
@@ -63,6 +65,10 @@ export default async function EntryDetailPage({ params }: Props) {
           >
             参加イベント一覧 →
           </Link>
+        </div>
+
+        <div className="mb-4">
+          <AuthStatusNotice status={entry.authStatus} xId={entry.xId} />
         </div>
 
         <dl className="space-y-2 text-sm">
@@ -179,6 +185,8 @@ export default async function EntryDetailPage({ params }: Props) {
         <h2 className="text-sm font-bold text-gray-900 mb-3">Xに投稿する</h2>
         <ShareTextButton entry={entry} event={event} />
       </div>
+
+      <ParticipationNotice className="mb-6" />
 
       <Link href={`/events/${event.id}`}
         className="block w-full border border-gray-200 text-gray-600 text-center rounded-xl py-3 text-sm hover:bg-gray-50 transition-colors">
