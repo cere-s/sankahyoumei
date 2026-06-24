@@ -24,13 +24,16 @@ export default async function NewEntryPage({ params }: Props) {
 
   const nextPath = `/events/${event.id}/entries/new`;
 
-  // 直近の参加表明があれば、その内容をフォームの初期値として引き継ぐ
+  // 直近の参加表明があれば、その内容をフォームの初期値として引き継ぐ。
+  // ただし作品名・キャラ名はイベントごとに変わるため引き継がない（撮影スタンスのみ引き継ぐ）。
   const previous = auth.user ? (await getEntriesByUserId(auth.user.id))[0] ?? null : null;
   const defaults = previous
     ? {
         displayName: previous.displayName,
         participationType: previous.participationType,
-        cosplayInfo: previous.cosplayInfo,
+        cosplayInfo: previous.cosplayInfo
+          ? { workName: '', characterName: '', shootingStatus: previous.cosplayInfo.shootingStatus }
+          : undefined,
         photographerInfo: previous.photographerInfo,
       }
     : undefined;
