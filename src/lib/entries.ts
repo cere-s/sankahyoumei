@@ -84,6 +84,26 @@ export async function getRecentEntries(limit = 10): Promise<ParticipationEntry[]
   return (data as DBEntry[]).map(dbToEntry);
 }
 
+/** イベントごとの参加表明数を集計して { eventId: 件数 } で返す */
+export async function getEntryCountsByEvent(): Promise<Record<string, number>> {
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from('participation_entries')
+    .select('event_id')
+    .eq('is_hidden', false);
+
+  if (error) {
+    console.error('getEntryCountsByEvent failed:', error);
+    return {};
+  }
+
+  const counts: Record<string, number> = {};
+  for (const row of (data ?? []) as { event_id: string }[]) {
+    counts[row.event_id] = (counts[row.event_id] ?? 0) + 1;
+  }
+  return counts;
+}
+
 export interface CosplaySuggestions {
   /** 登録済みの作品名（重複排除・五十音/出現順） */
   works: string[];
