@@ -1,6 +1,6 @@
 import type { User } from '@supabase/supabase-js';
 import type { Profile } from '@/types';
-import { createAuthServerClient } from './supabase/server';
+import { createAuthServerClient, createAdminClient } from './supabase/server';
 
 interface ProfileRow {
   id: string;
@@ -46,11 +46,56 @@ export function extractXProfile(user: User): {
     identity?.id ??
     pick('provider_id', 'sub', 'user_id') ??
     null;
-  const xUsername = pick('user_name', 'preferred_username', 'nickname', 'screen_name');
+  const xUsername = pick('user_name', 'preferred_username', 'nickname', 'screen_name', 'custom_claims');
   const xDisplayName = pick('full_name', 'name', 'display_name');
   const xAvatarUrl = pick('avatar_url', 'picture', 'profile_image_url');
 
   return { xUserId, xUsername, xDisplayName, xAvatarUrl };
+}
+
+/**
+ * user の metadata から profiles を作成/更新する（service role で実行、RLSの影響を受けない）。
+ * X API は叩かない。保存した Profile を返す。
+ */
+export async function syncProfileFromUser(user: User): Promise<Profile> {
+  const x = extractXProfile(user);
+
+  // 診断用：保存する項目が取れているか確認（トークン等の秘密情報は出さない）
+  console.log('[auth] sync user', user.id, {
+    metaKeys: Object.keys(user.user_metadata ?? {}),
+    identities: user.identities?.map((i) => i.provider),
+    resolved: {
+      xUserId: Boolean(x.xUserId),
+      xUsername: Boolean(x.xUsername),
+      xDisplayName: Boolean(x.xDisplayName),
+      xAvatarUrl: Boolean(x.xAvatarUrl),
+    },
+  });
+
+  const admin = createAdminClient();
+  const { error } = await admin.from('profiles').upsert(
+    {
+      id: user.id,
+      x_user_id: x.xUserId,
+      x_username: x.xUsername,
+      x_display_name: x.xDisplayName,
+      x_avatar_url: x.xAvatarUrl,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'id' }
+  );
+
+  if (error) {
+    console.error('profile upsert failed:', error.message);
+  }
+
+  return {
+    id: user.id,
+    xUserId: x.xUserId ?? undefined,
+    xUsername: x.xUsername ?? undefined,
+    xDisplayName: x.xDisplayName ?? undefined,
+    xAvatarUrl: x.xAvatarUrl ?? undefined,
+  };
 }
 
 /** ログイン中のユーザーを返す（未ログインなら null） */
@@ -64,7 +109,8 @@ export async function getCurrentUser(): Promise<User | null> {
 
 /**
  * ログイン中ユーザーと profiles の保存済み情報をまとめて返す。
- * profiles は DB を1回読むだけで、X API は叩かない。
+ * profiles 行が無い／ユーザー名が未保存なら、その場で metadata から1回だけ同期する。
+ * 同期済みなら DB を読むだけで、X API は叩かない。
  */
 export async function getCurrentAuth(): Promise<{ user: User | null; profile: Profile | null }> {
   const supabase = await createAuthServerClient();
@@ -74,5 +120,12 @@ export async function getCurrentAuth(): Promise<{ user: User | null; profile: Pr
   if (!user) return { user: null, profile: null };
 
   const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
-  return { user, profile: data ? rowToProfile(data as ProfileRow) : null };
+  let profile = data ? rowToProfile(data as ProfileRow) : null;
+
+  // コールバックを通らなかった場合などの保険：未保存ならここで同期
+  if (!profile || !profile.xUsername) {
+    profile = await syncProfileFromUser(user);
+  }
+
+  return { user, profile };
 }
