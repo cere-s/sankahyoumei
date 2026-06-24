@@ -27,9 +27,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <p>
             本サービスの利用により生じた損害・トラブルについて運営者は一切の責任を負いません。
           </p>
-          <p>
+          <p className="flex items-center justify-center gap-3">
             <Link href="/disclaimer" className="text-gray-500 hover:text-violet-600 hover:underline">
               免責事項
+            </Link>
+            <span className="text-gray-300">·</span>
+            <Link href="/contact" className="text-gray-500 hover:text-violet-600 hover:underline">
+              お問い合わせ
             </Link>
           </p>
           <p>コスプレ参加表明 — イベント参加をもっと楽しく</p>
