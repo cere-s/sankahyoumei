@@ -1,6 +1,14 @@
 import type { User } from '@supabase/supabase-js';
+import { cookies } from 'next/headers';
 import type { Profile } from '@/types';
 import { createAuthServerClient, createAdminClient } from './supabase/server';
+import { DEMO, DEMO_SESSION_COOKIE, demoUser, demoProfile } from './demo';
+
+/** デモモード: Cookie でデモログイン状態を判定 */
+async function demoLoggedIn(): Promise<boolean> {
+  const store = await cookies();
+  return store.get(DEMO_SESSION_COOKIE)?.value === '1';
+}
 
 interface ProfileRow {
   id: string;
@@ -87,6 +95,7 @@ export async function syncProfileFromUser(user: User): Promise<Profile> {
 
 /** ログイン中のユーザーを返す（未ログインなら null） */
 export async function getCurrentUser(): Promise<User | null> {
+  if (DEMO) return (await demoLoggedIn()) ? demoUser() : null;
   const supabase = await createAuthServerClient();
   const {
     data: { user },
@@ -100,6 +109,11 @@ export async function getCurrentUser(): Promise<User | null> {
  * 同期済みなら DB を読むだけで、X API は叩かない。
  */
 export async function getCurrentAuth(): Promise<{ user: User | null; profile: Profile | null }> {
+  if (DEMO) {
+    return (await demoLoggedIn())
+      ? { user: demoUser(), profile: demoProfile }
+      : { user: null, profile: null };
+  }
   const supabase = await createAuthServerClient();
   const {
     data: { user },

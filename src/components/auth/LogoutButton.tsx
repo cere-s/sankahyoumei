@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { DEMO } from '@/lib/demo';
 
 export function LogoutButton({ className }: { className?: string }) {
   const [loading, setLoading] = useState(false);
@@ -10,6 +11,10 @@ export function LogoutButton({ className }: { className?: string }) {
 
   async function handleLogout() {
     setLoading(true);
+    if (DEMO) {
+      window.location.href = '/auth/demo?action=logout&next=/';
+      return;
+    }
     const supabase = createClient();
     await supabase.auth.signOut();
     router.refresh();

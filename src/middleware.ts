@@ -8,6 +8,9 @@ import { createServerClient } from '@supabase/ssr';
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
+  // デモモードでは Supabase を使わない
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') return response;
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key =
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??

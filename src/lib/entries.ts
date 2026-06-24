@@ -9,6 +9,13 @@ import type {
 import { createServerClient, createAdminClient, createAuthServerClient } from './supabase/server';
 import { generateToken, hashToken, verifyToken } from './token';
 import { verifyTweetForXId } from './tweet';
+import {
+  DEMO,
+  demoEntries,
+  demoGetEntryById,
+  demoCountsByEvent,
+  demoCosplaySuggestions,
+} from './demo';
 
 interface DBEntry {
   id: string;
@@ -83,6 +90,11 @@ function dbToEntry(row: DBEntry): ParticipationEntry {
 }
 
 export async function getRecentEntries(limit = 10): Promise<ParticipationEntry[]> {
+  if (DEMO) {
+    return [...demoEntries]
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .slice(0, limit);
+  }
   const supabase = createServerClient();
   const { data, error } = await supabase
     .from('participation_entries')
@@ -97,6 +109,7 @@ export async function getRecentEntries(limit = 10): Promise<ParticipationEntry[]
 
 /** イベントごとの参加表明数を集計して { eventId: 件数 } で返す */
 export async function getEntryCountsByEvent(): Promise<Record<string, number>> {
+  if (DEMO) return demoCountsByEvent();
   const supabase = createServerClient();
   const { data, error } = await supabase
     .from('participation_entries')
@@ -126,6 +139,7 @@ export interface CosplaySuggestions {
 
 /** 既存のコスプレ参加表明から作品名・キャラ名のサジェスト候補を集計する */
 export async function getCosplaySuggestions(): Promise<CosplaySuggestions> {
+  if (DEMO) return demoCosplaySuggestions();
   const supabase = createServerClient();
   const { data, error } = await supabase
     .from('participation_entries')
@@ -166,6 +180,11 @@ export async function getCosplaySuggestions(): Promise<CosplaySuggestions> {
 }
 
 export async function getEntriesByUserId(userId: string): Promise<ParticipationEntry[]> {
+  if (DEMO) {
+    return demoEntries
+      .filter((e) => e.userId === userId)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
   const supabase = createServerClient();
   const { data, error } = await supabase
     .from('participation_entries')
@@ -179,6 +198,11 @@ export async function getEntriesByUserId(userId: string): Promise<ParticipationE
 }
 
 export async function getEntriesByXId(xId: string): Promise<ParticipationEntry[]> {
+  if (DEMO) {
+    return demoEntries
+      .filter((e) => e.xId === xId)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
   const supabase = createServerClient();
   const { data, error } = await supabase
     .from('participation_entries')
@@ -192,6 +216,11 @@ export async function getEntriesByXId(xId: string): Promise<ParticipationEntry[]
 }
 
 export async function getEntriesByEventId(eventId: string): Promise<ParticipationEntry[]> {
+  if (DEMO) {
+    return demoEntries
+      .filter((e) => e.eventId === eventId)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
   const supabase = createServerClient();
   const { data, error } = await supabase
     .from('participation_entries')
@@ -205,6 +234,7 @@ export async function getEntriesByEventId(eventId: string): Promise<Participatio
 }
 
 export async function getEntryById(id: string): Promise<ParticipationEntry | null> {
+  if (DEMO) return demoGetEntryById(id);
   const supabase = createServerClient();
   const { data, error } = await supabase
     .from('participation_entries')
@@ -237,6 +267,26 @@ export interface CreateEntryInput {
 }
 
 export async function createEntry(input: CreateEntryInput): Promise<CreateEntryResult> {
+  if (DEMO) {
+    const entry: ParticipationEntry = {
+      id: `demo-new-${Math.random().toString(36).slice(2, 10)}`,
+      eventId: input.eventId,
+      displayName: input.displayName,
+      xId: input.xId,
+      participationType: input.participationType,
+      participationDate: input.participationDate,
+      comment: input.comment ?? '',
+      note: input.note,
+      imageUrl: input.imageUrl,
+      userId: input.userId,
+      xUsernameSnapshot: input.xUsernameSnapshot,
+      authStatus: 'verified_x',
+      cosplayInfo: input.cosplayInfo,
+      photographerInfo: input.photographerInfo,
+      createdAt: new Date().toISOString(),
+    };
+    return { entry, editToken: 'demo-token' };
+  }
   // 本人のセッションで insert（RLS: auth.uid() = user_id を満たす）
   const supabase = await createAuthServerClient();
   const editToken = generateToken();
@@ -309,6 +359,16 @@ export async function updateEntry(
   entryId: string,
   input: UpdateEntryInput
 ): Promise<ParticipationEntry> {
+  if (DEMO) {
+    const base = demoGetEntryById(entryId)!;
+    return {
+      ...base,
+      comment: input.comment ?? base.comment,
+      participationDate: input.participationDate ?? base.participationDate,
+      cosplayInfo: input.cosplayInfo ?? base.cosplayInfo,
+      photographerInfo: input.photographerInfo ?? base.photographerInfo,
+    };
+  }
   const admin = createAdminClient();
 
   // 既存行を取得（編集権限の判定とツイート検証に使用）
@@ -374,6 +434,7 @@ export async function hideEntry(
   entryId: string,
   opts: { token?: string; authUserId?: string | null }
 ): Promise<void> {
+  if (DEMO) return;
   const admin = createAdminClient();
 
   const { data: existing, error: fetchError } = await admin

@@ -3,6 +3,7 @@ import { Resend } from 'resend';
 import { getEntryById } from '@/lib/entries';
 import { getEventById } from '@/lib/events';
 import { getSiteUrl } from '@/lib/site';
+import { DEMO } from '@/lib/demo';
 
 const REPORT_REASONS: Record<string, string> = {
   impersonation: 'なりすまし',
@@ -40,6 +41,9 @@ export async function POST(request: NextRequest) {
   if (details.length > MAX_DETAILS || reporterContact.length > MAX_CONTACT) {
     return NextResponse.json({ error: '入力内容が長すぎます' }, { status: 400 });
   }
+
+  // デモモードでは送信せず成功を返す
+  if (DEMO) return NextResponse.json({ success: true });
 
   // 通報対象の情報はクライアント値ではなくサーバー側で確定する
   const entry = await getEntryById(entryId);

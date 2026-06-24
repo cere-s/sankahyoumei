@@ -1,5 +1,6 @@
 import type { Event } from '@/types';
 import { createServerClient } from './supabase/server';
+import { DEMO, demoEvents, demoGetEventById } from './demo';
 
 interface DBEvent {
   id: string;
@@ -41,6 +42,7 @@ function dbToEvent(row: DBEvent): Event {
 }
 
 export async function getAllEvents(): Promise<Event[]> {
+  if (DEMO) return [...demoEvents].sort((a, b) => a.date.localeCompare(b.date));
   const supabase = createServerClient();
   const { data, error } = await supabase
     .from('events')
@@ -52,6 +54,7 @@ export async function getAllEvents(): Promise<Event[]> {
 }
 
 export async function getEventById(id: string): Promise<Event | null> {
+  if (DEMO) return demoGetEventById(id);
   const supabase = createServerClient();
   const { data, error } = await supabase
     .from('events')

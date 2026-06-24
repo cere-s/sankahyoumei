@@ -4,6 +4,8 @@ import { Geist } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
 import { Header } from '@/components/Header';
 import { BetaBanner } from '@/components/BetaBanner';
+import { DemoBanner } from '@/components/DemoBanner';
+import { DEMO } from '@/lib/demo';
 import './globals.css';
 
 const geist = Geist({
@@ -12,15 +14,17 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: 'コスプレ参加表明',
+  title: DEMO ? 'コスプレ参加表明（デモ版）' : 'コスプレ参加表明',
   description: 'コスプレイベントへの参加を簡単に表明・検索できるサービス',
+  // デモ版は検索エンジンに載せない
+  robots: DEMO ? { index: false, follow: false } : undefined,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ja" className={`${geist.variable} h-full`}>
       <body className="min-h-full flex flex-col bg-gray-50 antialiased">
-        <BetaBanner />
+        {DEMO ? <DemoBanner /> : <BetaBanner />}
         <Header />
         <main className="flex-1">{children}</main>
         <footer className="border-t border-gray-100 bg-white mt-12 py-6 text-center text-xs text-gray-400 space-y-2">
