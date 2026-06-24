@@ -277,9 +277,6 @@ export function EntryForm({ eventId, eventName, defaultDate, suggestions = EMPTY
               <img src={profile.xAvatarUrl} alt="" className="w-6 h-6 rounded-full" />
             )}
             <span className="text-sm font-medium text-gray-800">@{xId}</span>
-            <span className="ml-auto inline-flex items-center gap-1 text-xs text-sky-700 bg-sky-50 border border-sky-200 px-2 py-0.5 rounded-full">
-              Xログイン確認済み
-            </span>
           </div>
           <p className="mt-1 text-xs text-gray-400">
             ログイン中のXアカウントが使用されます。手入力はできません。

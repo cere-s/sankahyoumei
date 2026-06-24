@@ -72,9 +72,11 @@ export default async function EntryDetailPage({ params }: Props) {
           </Link>
         </div>
 
-        <div className="mb-4">
-          <AuthStatusNotice status={entry.authStatus} xId={entry.xId} />
-        </div>
+        {entry.authStatus !== 'verified_x' && (
+          <div className="mb-4">
+            <AuthStatusNotice status={entry.authStatus} />
+          </div>
+        )}
 
         <dl className="space-y-2 text-sm">
           <div className="flex gap-2">

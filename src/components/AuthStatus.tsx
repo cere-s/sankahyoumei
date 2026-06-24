@@ -1,14 +1,8 @@
 import type { AuthStatus } from '@/types';
 
-/** 一覧カード用のコンパクトな認証バッジ */
+/** 一覧カード用のコンパクトな認証バッジ。Xログイン確認済みは既定のため表示せず、未確認のみ警告する */
 export function AuthStatusBadge({ status }: { status: AuthStatus }) {
-  if (status === 'verified_x') {
-    return (
-      <span className="inline-flex items-center gap-1 text-[10px] bg-sky-50 text-sky-700 border border-sky-200 px-1.5 py-0.5 rounded-full font-medium self-center">
-        Xログイン確認済み
-      </span>
-    );
-  }
+  if (status === 'verified_x') return null;
   return (
     <span className="inline-flex items-center gap-1 text-[10px] bg-gray-100 text-gray-500 border border-gray-200 px-1.5 py-0.5 rounded-full font-medium self-center">
       X未確認
@@ -16,19 +10,9 @@ export function AuthStatusBadge({ status }: { status: AuthStatus }) {
   );
 }
 
-/** 詳細ページ用の説明付き認証ブロック */
-export function AuthStatusNotice({ status, xId }: { status: AuthStatus; xId: string }) {
-  if (status === 'verified_x') {
-    return (
-      <div className="bg-sky-50 border border-sky-200 rounded-lg px-3 py-2.5 text-xs text-sky-800 leading-relaxed">
-        <p className="font-bold">Xログイン確認済み</p>
-        <p>この参加表明は @{xId} のXアカウントでログインして作成されています。</p>
-        <p className="mt-1 text-sky-700/80">
-          ※ Xログイン確認は本人のアカウントであることのみを示します。撮影・交流の許可を意味するものではありません。
-        </p>
-      </div>
-    );
-  }
+/** 詳細ページ用の認証ブロック。Xログイン確認済みは表示せず、未確認のみ注意を表示する */
+export function AuthStatusNotice({ status }: { status: AuthStatus; xId?: string }) {
+  if (status === 'verified_x') return null;
   return (
     <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-xs text-gray-600 leading-relaxed">
       <p className="font-bold text-gray-700">X未確認</p>
