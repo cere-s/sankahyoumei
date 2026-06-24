@@ -9,6 +9,8 @@ import type {
   PhotographerShootingStyle,
   CreateEntryResult,
   Profile,
+  CosplayInfo,
+  PhotographerInfo,
 } from '@/types';
 import type { CosplaySuggestions } from '@/lib/entries';
 import {
@@ -18,6 +20,14 @@ import {
   PHOTOGRAPHER_SHOOTING_STYLE_LABELS,
 } from '@/lib/utils';
 
+/** 前回の参加表明から引き継ぐ初期値 */
+export interface EntryDefaults {
+  displayName?: string;
+  participationType?: ParticipationType;
+  cosplayInfo?: CosplayInfo;
+  photographerInfo?: PhotographerInfo;
+}
+
 interface Props {
   eventId: string;
   eventName: string;
@@ -25,6 +35,8 @@ interface Props {
   suggestions?: CosplaySuggestions;
   /** Xログイン済みプロフィール（X IDは手入力させず、ここから自動設定する） */
   profile: Profile;
+  /** 直近の参加表明から引き継ぐ初期値 */
+  defaults?: EntryDefaults;
 }
 
 const EMPTY_SUGGESTIONS: CosplaySuggestions = { works: [], charactersByWork: {}, allCharacters: [] };
@@ -119,15 +131,16 @@ function SuccessView({
   );
 }
 
-export function EntryForm({ eventId, eventName, defaultDate, suggestions = EMPTY_SUGGESTIONS, profile }: Props) {
+export function EntryForm({ eventId, eventName, defaultDate, suggestions = EMPTY_SUGGESTIONS, profile, defaults }: Props) {
   const [formState, setFormState] = useState<FormState>('input');
   const [createdData, setCreatedData] = useState<{ entryId: string; editToken: string } | null>(null);
 
   // X IDはログイン中のXユーザー名で固定（手入力不可）
   const xId = profile.xUsername ?? '';
 
-  const [participationType, setParticipationType] = useState<ParticipationType>('cosplay');
-  const [displayName, setDisplayName] = useState('');
+  // 直近の参加表明があれば初期値として引き継ぐ（作品・キャラ等は確認・修正できる）
+  const [participationType, setParticipationType] = useState<ParticipationType>(defaults?.participationType ?? 'cosplay');
+  const [displayName, setDisplayName] = useState(defaults?.displayName ?? '');
   const [participationDate, setParticipationDate] = useState(defaultDate);
   const [comment, setComment] = useState('');
   const [imageUrl, setImageUrl] = useState('');
@@ -135,16 +148,16 @@ export function EntryForm({ eventId, eventName, defaultDate, suggestions = EMPTY
   const [deletePassword, setDeletePassword] = useState('');
 
   // Cosplay
-  const [workName, setWorkName] = useState('');
-  const [characterName, setCharacterName] = useState('');
-  const [shootingStatus, setShootingStatus] = useState<CosplayShootingStatus>('greeting_welcome');
+  const [workName, setWorkName] = useState(defaults?.cosplayInfo?.workName ?? '');
+  const [characterName, setCharacterName] = useState(defaults?.cosplayInfo?.characterName ?? '');
+  const [shootingStatus, setShootingStatus] = useState<CosplayShootingStatus>(defaults?.cosplayInfo?.shootingStatus ?? 'greeting_welcome');
 
   // Photographer
-  const [targetWorks, setTargetWorks] = useState('');
-  const [availableHours, setAvailableHours] = useState('');
-  const [firstMeetStatus, setFirstMeetStatus] = useState<PhotographerFirstMeetStatus>('negotiable');
-  const [portfolioUrl, setPortfolioUrl] = useState('');
-  const [shootingStyles, setShootingStyles] = useState<PhotographerShootingStyle[]>([]);
+  const [targetWorks, setTargetWorks] = useState(defaults?.photographerInfo?.targetWorks ?? '');
+  const [availableHours, setAvailableHours] = useState(defaults?.photographerInfo?.availableHours ?? '');
+  const [firstMeetStatus, setFirstMeetStatus] = useState<PhotographerFirstMeetStatus>(defaults?.photographerInfo?.firstMeetStatus ?? 'negotiable');
+  const [portfolioUrl, setPortfolioUrl] = useState(defaults?.photographerInfo?.portfolioUrl ?? '');
+  const [shootingStyles, setShootingStyles] = useState<PhotographerShootingStyle[]>(defaults?.photographerInfo?.shootingStyles ?? []);
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState('');
@@ -244,6 +257,12 @@ export function EntryForm({ eventId, eventName, defaultDate, suggestions = EMPTY
       <div className="bg-violet-50 rounded-xl px-4 py-3 text-sm text-violet-700 font-medium">
         {eventName}
       </div>
+
+      {defaults && (
+        <p className="text-xs text-gray-500 -mt-3">
+          前回の参加表明から内容を引き継いでいます。必要に応じて修正してください。
+        </p>
+      )}
 
       {/* 参加種別 */}
       <Field label="参加種別" required>

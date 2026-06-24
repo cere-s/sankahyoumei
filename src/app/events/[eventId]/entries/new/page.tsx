@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getEventById } from '@/lib/events';
-import { getCosplaySuggestions } from '@/lib/entries';
+import { getCosplaySuggestions, getEntriesByUserId } from '@/lib/entries';
 import { getCurrentAuth } from '@/lib/auth';
 import { EntryForm } from '@/components/EntryForm';
 import { XLoginButton } from '@/components/auth/XLoginButton';
@@ -24,6 +24,17 @@ export default async function NewEntryPage({ params }: Props) {
 
   const nextPath = `/events/${event.id}/entries/new`;
 
+  // 直近の参加表明があれば、その内容をフォームの初期値として引き継ぐ
+  const previous = auth.user ? (await getEntriesByUserId(auth.user.id))[0] ?? null : null;
+  const defaults = previous
+    ? {
+        displayName: previous.displayName,
+        participationType: previous.participationType,
+        cosplayInfo: previous.cosplayInfo,
+        photographerInfo: previous.photographerInfo,
+      }
+    : undefined;
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
       <div className="flex items-center gap-2 mb-6">
@@ -42,6 +53,7 @@ export default async function NewEntryPage({ params }: Props) {
           defaultDate={event.date}
           suggestions={suggestions}
           profile={auth.profile}
+          defaults={defaults}
         />
       ) : (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 text-center space-y-4">
