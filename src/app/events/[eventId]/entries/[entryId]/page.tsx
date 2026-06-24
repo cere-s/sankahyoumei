@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { getEventById } from '@/lib/events';
 import { getEntryById } from '@/lib/entries';
 import { ShareTextButton } from '@/components/ShareTextButton';
+import { ReportButton } from '@/components/ReportButton';
 import {
   PARTICIPATION_TYPE_LABELS,
   PARTICIPATION_TYPE_COLORS,
@@ -174,6 +175,10 @@ export default async function EntryDetailPage({ params }: Props) {
         className="block w-full border border-gray-200 text-gray-600 text-center rounded-xl py-3 text-sm hover:bg-gray-50 transition-colors">
         {event.name} の参加者一覧に戻る
       </Link>
+
+      <div className="mt-6 text-center">
+        <ReportButton entryId={entry.id} displayName={entry.displayName} />
+      </div>
     </div>
   );
 }
