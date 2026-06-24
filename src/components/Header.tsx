@@ -18,13 +18,18 @@ export async function Header() {
           </Link>
           {user ? (
             <div className="flex items-center gap-2">
-              {profile?.xAvatarUrl && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={profile.xAvatarUrl} alt="" className="w-6 h-6 rounded-full" />
-              )}
-              {profile?.xUsername && (
-                <span className="text-xs text-gray-600 hidden sm:inline">@{profile.xUsername}</span>
-              )}
+              <Link
+                href="/mypage"
+                className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+              >
+                {profile?.xAvatarUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={profile.xAvatarUrl} alt="" className="w-6 h-6 rounded-full" />
+                )}
+                <span className="text-xs text-gray-600 hidden sm:inline">
+                  {profile?.xUsername ? `@${profile.xUsername}` : 'マイページ'}
+                </span>
+              </Link>
               <LogoutButton />
             </div>
           ) : (
