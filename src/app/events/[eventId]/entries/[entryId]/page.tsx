@@ -7,6 +7,8 @@ import { ReportButton } from '@/components/ReportButton';
 import { TweetEmbed } from '@/components/TweetEmbed';
 import { AuthStatusNotice } from '@/components/AuthStatus';
 import { ParticipationNotice } from '@/components/ParticipationNotice';
+import { OwnerEntryActions } from '@/components/OwnerEntryActions';
+import { getCurrentUser } from '@/lib/auth';
 import {
   PARTICIPATION_TYPE_LABELS,
   PARTICIPATION_TYPE_COLORS,
@@ -25,12 +27,15 @@ interface Props {
 
 export default async function EntryDetailPage({ params }: Props) {
   const { eventId, entryId } = await params;
-  const [event, entry] = await Promise.all([
+  const [event, entry, user] = await Promise.all([
     getEventById(eventId),
     getEntryById(entryId),
+    getCurrentUser(),
   ]);
 
   if (!event || !entry) notFound();
+
+  const isOwner = Boolean(user && entry.userId && user.id === entry.userId);
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
@@ -171,6 +176,9 @@ export default async function EntryDetailPage({ params }: Props) {
           )}
         </dl>
       </div>
+
+      {/* 本人のみ：編集・削除 */}
+      {isOwner && <OwnerEntryActions eventId={event.id} entryId={entry.id} />}
 
       {/* 埋め込みツイート */}
       {entry.tweetUrl && (
