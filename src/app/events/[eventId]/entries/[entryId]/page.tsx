@@ -41,15 +41,7 @@ export default async function EntryDetailPage({ params }: Props) {
       {/* 参加表明カード */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-6">
         <div className="flex items-start justify-between gap-2 mb-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-lg font-bold text-gray-900">{entry.displayName}</h1>
-            {entry.isVerifiedX && (
-              <span className="inline-flex items-center gap-1 text-xs bg-sky-50 text-sky-700 border border-sky-200 px-2 py-0.5 rounded-full font-medium">
-                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-                X本人確認済み
-              </span>
-            )}
-          </div>
+          <h1 className="text-lg font-bold text-gray-900">{entry.displayName}</h1>
           <span className={`text-xs px-2 py-1 rounded-full font-medium shrink-0 ${
             PARTICIPATION_TYPE_COLORS[entry.participationType]
           }`}>

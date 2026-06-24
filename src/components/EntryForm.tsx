@@ -383,9 +383,8 @@ export function EntryForm({ eventId, eventName, defaultDate, suggestions = EMPTY
           <input type="url" value={tweetUrl} onChange={(e) => setTweetUrl(e.target.value)}
             placeholder="https://x.com/あなたのID/status/..." className={inputClass} />
           <p className="mt-1 text-xs text-gray-400">
-            ご自身のツイートURLを入力すると参加表明ページに埋め込まれ、
-            <span className="text-violet-600 font-medium">X本人確認済み</span>
-            の表示が付きます。投稿者がX IDと一致しない場合は登録できません。
+            ご自身のツイートURLを入力すると参加表明ページに埋め込まれます。
+            投稿者がX IDと一致しない場合は登録できません。
           </p>
         </Field>
         <Field label="削除用パスワード（任意）">

@@ -247,8 +247,8 @@ export function EditEntryForm({ entry, event, editToken, suggestions = EMPTY_SUG
           <input type="url" value={tweetUrl} onChange={(e) => setTweetUrl(e.target.value)}
             placeholder="https://x.com/あなたのID/status/..." className={inputClass} />
           <p className="mt-1 text-xs text-gray-400">
-            ご自身のツイートURLを入力すると埋め込まれ、X本人確認済みの表示が付きます。
-            空にすると埋め込みを解除します。投稿者がX IDと一致しない場合は保存できません。
+            ご自身のツイートURLを入力すると埋め込まれます。空にすると埋め込みを解除します。
+            投稿者がX IDと一致しない場合は保存できません。
           </p>
         </div>
 
