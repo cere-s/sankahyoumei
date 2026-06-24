@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { Geist } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
 import { Header } from '@/components/Header';
@@ -22,8 +23,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <BetaBanner />
         <Header />
         <main className="flex-1">{children}</main>
-        <footer className="border-t border-gray-100 bg-white mt-12 py-6 text-center text-xs text-gray-400">
-          コスプレ参加表明 — イベント参加をもっと楽しく
+        <footer className="border-t border-gray-100 bg-white mt-12 py-6 text-center text-xs text-gray-400 space-y-2">
+          <p>
+            本サービスの利用により生じた損害・トラブルについて運営者は一切の責任を負いません。
+          </p>
+          <p>
+            <Link href="/disclaimer" className="text-gray-500 hover:text-violet-600 hover:underline">
+              免責事項
+            </Link>
+          </p>
+          <p>コスプレ参加表明 — イベント参加をもっと楽しく</p>
         </footer>
         <Analytics />
       </body>
