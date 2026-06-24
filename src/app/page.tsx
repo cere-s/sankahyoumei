@@ -35,14 +35,10 @@ export default async function TopPage() {
             <br />
             誰がどのキャラで来るかが一目でわかります。
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="flex justify-center">
             <Link href="/events"
-              className="bg-violet-600 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-violet-700 transition-colors">
+              className="bg-violet-600 text-white px-8 py-3 rounded-xl font-bold text-sm hover:bg-violet-700 transition-colors">
               イベントを探す
-            </Link>
-            <Link href="/events"
-              className="bg-white text-violet-600 border border-violet-200 px-6 py-3 rounded-xl font-bold text-sm hover:bg-violet-50 transition-colors">
-              参加表明を作る
             </Link>
           </div>
         </div>
