@@ -12,7 +12,8 @@ ALTER TABLE events
   -- 詳細情報（外部取得イベント用）
   ADD COLUMN IF NOT EXISTS organizer     TEXT,
   ADD COLUMN IF NOT EXISTS address       TEXT,
-  ADD COLUMN IF NOT EXISTS x_url         TEXT;
+  ADD COLUMN IF NOT EXISTS x_url         TEXT,
+  ADD COLUMN IF NOT EXISTS region        TEXT;
 
 -- 重複登録防止ユニーク制約
 -- ※ 既にインデックスがある場合は先に DROP INDEX IF EXISTS events_source_external_id_unique; を実行

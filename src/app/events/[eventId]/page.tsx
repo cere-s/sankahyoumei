@@ -37,6 +37,12 @@ export default async function EventDetailPage({ params }: Props) {
             <dt className="text-gray-400 shrink-0 w-14">開催日</dt>
             <dd>{formatDate(event.date)}</dd>
           </div>
+          {event.region && (
+            <div className="flex gap-2">
+              <dt className="text-gray-400 shrink-0 w-14">地方</dt>
+              <dd>{event.region}</dd>
+            </div>
+          )}
           {event.organizer && (
             <div className="flex gap-2">
               <dt className="text-gray-400 shrink-0 w-14">主催</dt>

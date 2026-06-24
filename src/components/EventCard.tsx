@@ -13,6 +13,11 @@ export function EventCard({ event }: Props) {
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 flex-wrap">
+              {event.region && (
+                <span className="text-[10px] bg-violet-50 text-violet-700 border border-violet-200 px-1.5 py-0.5 rounded font-medium shrink-0">
+                  {event.region}
+                </span>
+              )}
               <h3 className="font-bold text-gray-900 text-base">{event.name}</h3>
               {event.isImported && (
                 <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded font-medium shrink-0">

@@ -16,6 +16,7 @@ interface DBEvent {
   organizer: string | null;
   address: string | null;
   x_url: string | null;
+  region: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -35,6 +36,7 @@ function dbToEvent(row: DBEvent): Event {
     organizer: row.organizer ?? undefined,
     address: row.address ?? undefined,
     xUrl: row.x_url ?? undefined,
+    region: row.region ?? undefined,
   };
 }
 

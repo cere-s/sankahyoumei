@@ -35,6 +35,7 @@ export interface Event {
   organizer?: string;
   address?: string;
   xUrl?: string;
+  region?: string;
 }
 
 export interface CosplayInfo {

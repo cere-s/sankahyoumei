@@ -3,9 +3,9 @@
  *
  * 使い方:
  *   npm run import:cos-cam -- --dry-run          # DBへ書き込まず確認のみ
- *   npm run import:cos-cam -- --limit=3          # 先頭3件だけ登録（テスト用）
- *   npm run import:cos-cam -- --limit=3 --dry-run
- *   npm run import:cos-cam                       # 全件 upsert
+ *   npm run import:cos-cam -- --limit=3          # 各地方の先頭3件だけ登録（テスト用）
+ *   npm run import:cos-cam -- --region=関西       # 特定地方のみ取得
+ *   npm run import:cos-cam                       # 全地方を全件 upsert
  *
  * 必要な環境変数 (.env.local):
  *   NEXT_PUBLIC_SUPABASE_URL
@@ -18,15 +18,23 @@ import { createHash } from 'crypto';
 
 // ---- 設定 ----
 const SOURCE_SITE = 'cos-cam.work';
-const LIST_URL = 'https://cos-cam.work/?page_id=154';
 const BASE_URL = 'https://cos-cam.work/';
 const FETCH_UA = 'Mozilla/5.0 (compatible; CosplayEntryBot/1.0)';
 /** 詳細ページ間のウェイト（ms）。取得元サイトへの過剰アクセス防止 */
 const DETAIL_FETCH_DELAY_MS = 1200;
 
+/** 取得対象の地方一覧（cos-cam.work の地方別ページ） */
+const REGIONS: { region: string; url: string }[] = [
+  { region: '関東', url: 'https://cos-cam.work/?page_id=154' },
+  { region: '東海', url: 'https://cos-cam.work/?page_id=93' },
+  { region: '関西', url: 'https://cos-cam.work/?page_id=88' },
+];
+
 const isDryRun = process.argv.includes('--dry-run');
 const limitArg = process.argv.find((a) => a.startsWith('--limit='));
 const limit = limitArg ? parseInt(limitArg.split('=')[1]) : Infinity;
+const regionArg = process.argv.find((a) => a.startsWith('--region='));
+const regionFilter = regionArg ? regionArg.split('=')[1] : null;
 
 // ---- 型定義 ----
 interface ImportedEvent {
@@ -39,6 +47,7 @@ interface ImportedEvent {
   organizer: string | null;
   address: string | null;
   xUrl: string | null;
+  region: string;
   sourceSite: string;
   sourceUrl: string;   // イベント詳細ページ URL
   externalId: string;
@@ -230,6 +239,7 @@ async function upsertEvents(events: ImportedEvent[]): Promise<number> {
     organizer: e.organizer,
     address: e.address,
     x_url: e.xUrl,
+    region: e.region,
     source_site: e.sourceSite,
     source_url: e.sourceUrl,
     external_id: e.externalId,
@@ -250,19 +260,17 @@ async function upsertEvents(events: ImportedEvent[]): Promise<number> {
   return upserted;
 }
 
-// ---- エントリーポイント ----
+// ---- 地方ごとの処理 ----
 
-async function main(): Promise<void> {
+/** 1地方分のリスト取得→詳細取得を行い ImportedEvent[] を返す */
+async function processRegion(region: string, url: string): Promise<ImportedEvent[]> {
   console.log('');
-  console.log(`📥 コスプレイベントインポート開始 ${isDryRun ? '[DRY-RUN]' : ''}`);
-  console.log(`   取得元: ${LIST_URL}`);
-  console.log('');
+  console.log(`────────── ${region} ──────────`);
+  console.log(`Fetching list: ${url}`);
 
-  // 1. リストページ取得
-  console.log(`Fetching list: ${LIST_URL}`);
   let listHtml: string;
   try {
-    const res = await fetch(LIST_URL, {
+    const res = await fetch(url, {
       headers: { 'User-Agent': FETCH_UA },
       signal: AbortSignal.timeout(20_000),
     });
@@ -270,28 +278,21 @@ async function main(): Promise<void> {
     listHtml = await res.text();
     console.log(`  → ${listHtml.length.toLocaleString()} bytes`);
   } catch (err) {
-    console.error('❌ リストページ取得失敗:', err);
-    process.exit(1);
+    console.error(`❌ [${region}] リストページ取得失敗:`, err);
+    return [];
   }
 
-  // 2. リストページ解析
   const { events: allListEvents, skipped } = parseListPage(listHtml);
   const listEvents = isFinite(limit) ? allListEvents.slice(0, limit) : allListEvents;
-  console.log('');
   console.log(`List parse: ${allListEvents.length} 件有効 / ${skipped.length} 件スキップ`);
   if (limit < allListEvents.length) {
     console.log(`  → --limit=${limit} のため先頭 ${limit} 件のみ処理します`);
   }
-  if (skipped.length > 0) {
-    skipped.forEach((s) => console.log(`  ⚠️  ${s.reason}: "${s.raw}"`));
-  }
   if (listEvents.length === 0) {
-    console.error('⚠️  有効なイベントが0件です。セレクターを確認してください。');
-    process.exit(1);
+    console.warn(`⚠️  [${region}] 有効なイベントが0件です。`);
+    return [];
   }
 
-  // 3. 詳細ページを順番に取得（レート制限: 1.2秒間隔）
-  console.log('');
   console.log(`Fetching ${listEvents.length} detail pages (${DETAIL_FETCH_DELAY_MS}ms間隔)...`);
   const importedEvents: ImportedEvent[] = [];
   let detailFailed = 0;
@@ -325,6 +326,7 @@ async function main(): Promise<void> {
         organizer: ev.organizer,
         address: detail.address,
         xUrl: detail.xUrl,
+        region,
         sourceSite: SOURCE_SITE,
         sourceUrl: ev.detailUrl,
         externalId: ev.externalId,
@@ -345,6 +347,7 @@ async function main(): Promise<void> {
         organizer: ev.organizer,
         address: null,
         xUrl: null,
+        region,
         sourceSite: SOURCE_SITE,
         sourceUrl: ev.detailUrl,
         externalId: ev.externalId,
@@ -352,28 +355,64 @@ async function main(): Promise<void> {
     }
   }
 
-  console.log('');
-  console.log(`Detail fetch: 成功 ${importedEvents.length - detailFailed} / 失敗 ${detailFailed}`);
+  console.log(`[${region}] Detail fetch: 成功 ${importedEvents.length - detailFailed} / 失敗 ${detailFailed}`);
+  return importedEvents;
+}
 
-  // 4. dry-run プレビュー
+// ---- エントリーポイント ----
+
+async function main(): Promise<void> {
+  const targetRegions = regionFilter
+    ? REGIONS.filter((r) => r.region === regionFilter)
+    : REGIONS;
+
+  if (targetRegions.length === 0) {
+    console.error(`❌ --region=${regionFilter} に一致する地方がありません。対象: ${REGIONS.map((r) => r.region).join(', ')}`);
+    process.exit(1);
+  }
+
+  console.log('');
+  console.log(`📥 コスプレイベントインポート開始 ${isDryRun ? '[DRY-RUN]' : ''}`);
+  console.log(`   対象地方: ${targetRegions.map((r) => r.region).join(', ')}`);
+
+  const importedEvents: ImportedEvent[] = [];
+  for (const { region, url } of targetRegions) {
+    const events = await processRegion(region, url);
+    importedEvents.push(...events);
+    // 地方間にもウェイトを入れる
+    await delay(DETAIL_FETCH_DELAY_MS);
+  }
+
+  console.log('');
+  console.log(`合計 ${importedEvents.length} 件を取得しました。`);
+  const byRegion = importedEvents.reduce<Record<string, number>>((acc, e) => {
+    acc[e.region] = (acc[e.region] ?? 0) + 1;
+    return acc;
+  }, {});
+  console.log(`  地方別: ${Object.entries(byRegion).map(([r, n]) => `${r} ${n}件`).join(' / ')}`);
+
+  if (importedEvents.length === 0) {
+    console.error('⚠️  取得できたイベントが0件です。セレクターやページ構造を確認してください。');
+    process.exit(1);
+  }
+
+  // dry-run プレビュー
   if (isDryRun) {
     console.log('');
-    console.log('--- DRY-RUN プレビュー（先頭5件）---');
-    importedEvents.slice(0, 5).forEach((e, i) => {
-      console.log(`[${i + 1}] ${e.date}  ${e.name}`);
-      console.log(`     主催: ${e.organizer ?? '不明'}`);
-      console.log(`     場所: ${e.location}`);
-      console.log(`     住所: ${e.address ?? '未取得'}`);
-      console.log(`     公式: ${e.officialUrl ?? '未設定'}`);
-      console.log(`     X   : ${e.xUrl ?? '未設定'}`);
-      console.log(`     詳細: ${e.sourceUrl}`);
-    });
+    console.log('--- DRY-RUN プレビュー（各地方の先頭2件）---');
+    for (const { region } of targetRegions) {
+      importedEvents.filter((e) => e.region === region).slice(0, 2).forEach((e) => {
+        console.log(`[${e.region}] ${e.date}  ${e.name}`);
+        console.log(`     主催: ${e.organizer ?? '不明'} / 場所: ${e.location}`);
+        console.log(`     住所: ${e.address ?? '未取得'} / 公式: ${e.officialUrl ?? '未設定'}`);
+      });
+    }
     console.log('');
     console.log('✅ DRY-RUN 完了。DBへの書き込みはしていません。');
     return;
   }
 
-  // 5. Supabase upsert
+  // Supabase upsert
   console.log('');
   console.log(`Upserting ${importedEvents.length} events...`);
   try {

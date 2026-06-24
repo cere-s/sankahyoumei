@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS events (
   organizer    TEXT,
   address      TEXT,
   x_url        TEXT,
+  region       TEXT,
   created_at  TIMESTAMPTZ DEFAULT NOW(),
   updated_at  TIMESTAMPTZ DEFAULT NOW()
 );
