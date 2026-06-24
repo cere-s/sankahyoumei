@@ -62,6 +62,8 @@ export interface ParticipationEntry {
   comment: string;
   note?: string;
   imageUrl?: string;
+  tweetUrl?: string;
+  isVerifiedX?: boolean;
   cosplayInfo?: CosplayInfo;
   photographerInfo?: PhotographerInfo;
   createdAt: string;

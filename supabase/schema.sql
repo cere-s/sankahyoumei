@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS participation_entries (
 
   -- 共通任意
   image_url TEXT,
+  tweet_url TEXT,
   comment   TEXT,
   note      TEXT,
 

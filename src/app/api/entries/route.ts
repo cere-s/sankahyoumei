@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
       comment: String(body.comment ?? '').trim(),
       note: body.note ? String(body.note).trim() : undefined,
       imageUrl: body.imageUrl ? String(body.imageUrl).trim() : undefined,
+      tweetUrl: body.tweetUrl ? String(body.tweetUrl).trim() : undefined,
       deletePassword: body.deletePassword ? String(body.deletePassword) : undefined,
       cosplayInfo: body.cosplayInfo as ParticipationEntry['cosplayInfo'] | undefined,
       photographerInfo: body.photographerInfo as ParticipationEntry['photographerInfo'] | undefined,
@@ -46,6 +47,11 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result, { status: 201 });
   } catch (e) {
+    const msg = String(e);
+    // ツイート検証など利用者向けのバリデーションエラーはそのまま返す
+    if (msg.includes('ツイート')) {
+      return NextResponse.json({ error: msg.replace(/^Error:\s*/, '') }, { status: 400 });
+    }
     console.error('POST /api/entries failed:', e);
     return NextResponse.json({ error: '参加表明の作成に失敗しました' }, { status: 500 });
   }

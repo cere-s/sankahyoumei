@@ -44,6 +44,7 @@ export function EditEntryForm({ entry, event, editToken, suggestions = EMPTY_SUG
 
   const [comment, setComment] = useState(entry.comment);
   const [participationDate, setParticipationDate] = useState(entry.participationDate);
+  const [tweetUrl, setTweetUrl] = useState(entry.tweetUrl ?? '');
 
   // Cosplay
   const [workName, setWorkName] = useState(entry.cosplayInfo?.workName ?? '');
@@ -86,6 +87,7 @@ export function EditEntryForm({ entry, event, editToken, suggestions = EMPTY_SUG
       token: editToken,
       comment,
       participationDate,
+      tweetUrl,
     };
 
     if (entry.participationType === 'cosplay') {
@@ -238,6 +240,16 @@ export function EditEntryForm({ entry, event, editToken, suggestions = EMPTY_SUG
           <label className="block text-sm font-medium text-gray-700 mb-1">コメント</label>
           <textarea value={comment} onChange={(e) => setComment(e.target.value)}
             rows={3} className={`${inputClass} resize-none`} />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">ツイートURL（任意）</label>
+          <input type="url" value={tweetUrl} onChange={(e) => setTweetUrl(e.target.value)}
+            placeholder="https://x.com/あなたのID/status/..." className={inputClass} />
+          <p className="mt-1 text-xs text-gray-400">
+            ご自身のツイートURLを入力すると埋め込まれ、X本人確認済みの表示が付きます。
+            空にすると埋め込みを解除します。投稿者がX IDと一致しない場合は保存できません。
+          </p>
         </div>
 
         {error && (

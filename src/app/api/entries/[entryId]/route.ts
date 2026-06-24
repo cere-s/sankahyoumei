@@ -12,6 +12,9 @@ function errorResponse(e: unknown, context: string) {
   if (msg.includes('見つかりません')) {
     return NextResponse.json({ error: msg.replace(/^Error:\s*/, '') }, { status: 404 });
   }
+  if (msg.includes('ツイート')) {
+    return NextResponse.json({ error: msg.replace(/^Error:\s*/, '') }, { status: 400 });
+  }
   console.error(`${context} failed:`, e);
   return NextResponse.json({ error: '処理に失敗しました' }, { status: 500 });
 }
@@ -46,6 +49,7 @@ export async function PUT(request: NextRequest, { params }: { params: Params }) 
       token: String(body.token),
       comment: body.comment !== undefined ? String(body.comment) : undefined,
       participationDate: body.participationDate ? String(body.participationDate) : undefined,
+      tweetUrl: body.tweetUrl !== undefined ? String(body.tweetUrl) : undefined,
       cosplayInfo: body.cosplayInfo as Parameters<typeof updateEntry>[1]['cosplayInfo'],
       photographerInfo: body.photographerInfo as Parameters<typeof updateEntry>[1]['photographerInfo'],
     });

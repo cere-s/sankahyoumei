@@ -42,6 +42,12 @@ export function EntryCard({ entry, eventId, eventName }: Props) {
           >
             {PARTICIPATION_TYPE_LABELS[entry.participationType]}
           </span>
+          {entry.isVerifiedX && (
+            <span className="inline-flex items-center gap-0.5 text-[10px] bg-sky-50 text-sky-700 border border-sky-200 px-1.5 py-0.5 rounded-full font-medium self-center">
+              <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+              本人確認済
+            </span>
+          )}
         </div>
 
         {entry.cosplayInfo && (

@@ -8,6 +8,7 @@ import type {
 } from '@/types';
 import { createServerClient, createAdminClient } from './supabase/server';
 import { generateToken, hashToken, verifyToken } from './token';
+import { verifyTweetForXId } from './tweet';
 
 interface DBEntry {
   id: string;
@@ -25,6 +26,7 @@ interface DBEntry {
   portfolio_url: string | null;
   shooting_style: string[] | null;
   image_url: string | null;
+  tweet_url: string | null;
   comment: string | null;
   note: string | null;
   edit_token_hash: string | null;
@@ -47,6 +49,8 @@ function dbToEntry(row: DBEntry): ParticipationEntry {
     comment: row.comment ?? '',
     note: row.note ?? undefined,
     imageUrl: row.image_url ?? undefined,
+    tweetUrl: row.tweet_url ?? undefined,
+    isVerifiedX: row.is_verified_x ?? false,
     createdAt: row.created_at,
   };
 
@@ -202,6 +206,7 @@ export interface CreateEntryInput {
   comment: string;
   note?: string;
   imageUrl?: string;
+  tweetUrl?: string;
   deletePassword?: string;
   cosplayInfo?: ParticipationEntry['cosplayInfo'];
   photographerInfo?: ParticipationEntry['photographerInfo'];
@@ -210,6 +215,16 @@ export interface CreateEntryInput {
 export async function createEntry(input: CreateEntryInput): Promise<CreateEntryResult> {
   const supabase = createServerClient();
   const editToken = generateToken();
+
+  // ツイートURLがあれば「投稿者 = X ID」を検証
+  let tweetUrl: string | null = null;
+  let isVerifiedX = false;
+  if (input.tweetUrl) {
+    const result = await verifyTweetForXId(input.tweetUrl, input.xId);
+    if (!result.ok) throw new Error(result.error);
+    tweetUrl = result.normalizedUrl;
+    isVerifiedX = true;
+  }
 
   const insertData = {
     event_id: input.eventId,
@@ -220,6 +235,8 @@ export async function createEntry(input: CreateEntryInput): Promise<CreateEntryR
     comment: input.comment || null,
     note: input.note || null,
     image_url: input.imageUrl || null,
+    tweet_url: tweetUrl,
+    is_verified_x: isVerifiedX,
     edit_token_hash: hashToken(editToken),
     delete_password_hash: input.deletePassword ? hashToken(input.deletePassword) : null,
     // cosplay
@@ -250,6 +267,8 @@ export interface UpdateEntryInput {
   token: string;
   comment?: string;
   participationDate?: string;
+  /** 空文字なら埋め込み解除、未指定なら変更なし */
+  tweetUrl?: string;
   cosplayInfo?: ParticipationEntry['cosplayInfo'];
   photographerInfo?: ParticipationEntry['photographerInfo'];
 }
@@ -260,15 +279,16 @@ export async function updateEntry(
 ): Promise<ParticipationEntry> {
   const admin = createAdminClient();
 
-  // トークン検証
+  // トークン検証（投稿者ハンドルもツイート検証用に取得）
   const { data: existing, error: fetchError } = await admin
     .from('participation_entries')
-    .select('edit_token_hash')
+    .select('edit_token_hash, x_id')
     .eq('id', entryId)
     .single();
 
   if (fetchError || !existing) throw new Error('参加表明が見つかりません');
-  if (!verifyToken(input.token, (existing as { edit_token_hash: string }).edit_token_hash)) {
+  const existingRow = existing as { edit_token_hash: string; x_id: string };
+  if (!verifyToken(input.token, existingRow.edit_token_hash)) {
     throw new Error('編集権限がありません');
   }
 
@@ -277,6 +297,17 @@ export async function updateEntry(
   };
   if (input.comment !== undefined) updateData.comment = input.comment || null;
   if (input.participationDate) updateData.participation_day = input.participationDate;
+  if (input.tweetUrl !== undefined) {
+    if (input.tweetUrl.trim()) {
+      const result = await verifyTweetForXId(input.tweetUrl, existingRow.x_id);
+      if (!result.ok) throw new Error(result.error);
+      updateData.tweet_url = result.normalizedUrl;
+      updateData.is_verified_x = true;
+    } else {
+      updateData.tweet_url = null;
+      updateData.is_verified_x = false;
+    }
+  }
   if (input.cosplayInfo) {
     updateData.work_name = input.cosplayInfo.workName || null;
     updateData.character_name = input.cosplayInfo.characterName || null;
