@@ -59,19 +59,6 @@ export function extractXProfile(user: User): {
  */
 export async function syncProfileFromUser(user: User): Promise<Profile> {
   const x = extractXProfile(user);
-
-  // 診断用：保存する項目が取れているか確認（トークン等の秘密情報は出さない）
-  console.log('[auth] sync user', user.id, {
-    metaKeys: Object.keys(user.user_metadata ?? {}),
-    identities: user.identities?.map((i) => i.provider),
-    resolved: {
-      xUserId: Boolean(x.xUserId),
-      xUsername: Boolean(x.xUsername),
-      xDisplayName: Boolean(x.xDisplayName),
-      xAvatarUrl: Boolean(x.xAvatarUrl),
-    },
-  });
-
   const admin = createAdminClient();
   const { error } = await admin.from('profiles').upsert(
     {
