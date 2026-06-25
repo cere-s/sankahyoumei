@@ -286,7 +286,7 @@ export function EntryForm({ eventId, eventName, defaultDate, suggestions = EMPTY
       <div className="space-y-4">
         <Field label="表示名" required error={errors.displayName}>
           <input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="例：レムコス花子" className={inputClass} />
+            maxLength={50} placeholder="例：レムコス花子" className={inputClass} />
         </Field>
 
         <Field label="X ID（Xログイン済み）">
@@ -314,7 +314,7 @@ export function EntryForm({ eventId, eventName, defaultDate, suggestions = EMPTY
           <h3 className="text-sm font-bold text-gray-700">コスプレ情報</h3>
           <Field label="作品名" required error={errors.workName}>
             <input type="text" value={workName} onChange={(e) => setWorkName(e.target.value)}
-              list="work-suggestions" autoComplete="off"
+              list="work-suggestions" autoComplete="off" maxLength={100}
               placeholder="例：Re:ゼロから始める異世界生活" className={inputClass} />
             <datalist id="work-suggestions">
               {suggestions.works.map((w) => <option key={w} value={w} />)}
@@ -322,7 +322,7 @@ export function EntryForm({ eventId, eventName, defaultDate, suggestions = EMPTY
           </Field>
           <Field label="キャラ名" required error={errors.characterName}>
             <input type="text" value={characterName} onChange={(e) => setCharacterName(e.target.value)}
-              list="character-suggestions" autoComplete="off"
+              list="character-suggestions" autoComplete="off" maxLength={100}
               placeholder="例：レム" className={inputClass} />
             <datalist id="character-suggestions">
               {characterOptions.map((c) => <option key={c} value={c} />)}
@@ -400,7 +400,7 @@ export function EntryForm({ eventId, eventName, defaultDate, suggestions = EMPTY
       <div className="space-y-4">
         <Field label="コメント">
           <textarea value={comment} onChange={(e) => setComment(e.target.value)}
-            placeholder="ひとことメッセージ、当日の予定など"
+            maxLength={1000} placeholder="ひとことメッセージ、当日の予定など"
             rows={3} className={`${inputClass} resize-none`} />
         </Field>
         <Field label="画像URL（任意）">

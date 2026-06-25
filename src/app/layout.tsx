@@ -6,6 +6,7 @@ import { Header } from '@/components/Header';
 import { BetaBanner } from '@/components/BetaBanner';
 import { DemoBanner } from '@/components/DemoBanner';
 import { DEMO } from '@/lib/demo';
+import { getSiteUrl } from '@/lib/site';
 import './globals.css';
 
 const geist = Geist({
@@ -13,11 +14,27 @@ const geist = Geist({
   subsets: ['latin'],
 });
 
+const siteName = DEMO ? 'コスプレ参加表明（デモ版）' : 'コスプレ参加表明';
+const description = 'コスプレイベントへの参加を簡単に表明・検索できるサービス';
+
 export const metadata: Metadata = {
-  title: DEMO ? 'コスプレ参加表明（デモ版）' : 'コスプレ参加表明',
-  description: 'コスプレイベントへの参加を簡単に表明・検索できるサービス',
+  metadataBase: new URL(getSiteUrl()),
+  title: siteName,
+  description,
   // デモ版は検索エンジンに載せない
   robots: DEMO ? { index: false, follow: false } : undefined,
+  openGraph: {
+    title: siteName,
+    description,
+    type: 'website',
+    locale: 'ja_JP',
+    siteName: 'コスプレ参加表明',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: siteName,
+    description,
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

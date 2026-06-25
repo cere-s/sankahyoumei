@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createEntry, getEntriesByEventId } from '@/lib/entries';
 import { getCurrentAuth } from '@/lib/auth';
+import { rateLimit, getClientIp } from '@/lib/rateLimit';
 import type { ParticipationType, ParticipationEntry } from '@/types';
 
 export async function GET(request: NextRequest) {
@@ -18,6 +19,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  if (!rateLimit(`entries:${getClientIp(request)}`, 10, 60_000)) {
+    return NextResponse.json({ error: 'リクエストが多すぎます。少し時間をおいてください。' }, { status: 429 });
+  }
+
   let body: Record<string, unknown>;
   try {
     body = await request.json();
@@ -41,6 +46,9 @@ export async function POST(request: NextRequest) {
   const { eventId, displayName, participationType, participationDate } = body;
   if (!eventId || !displayName || !participationType || !participationDate) {
     return NextResponse.json({ error: '必須項目が入力されていません' }, { status: 400 });
+  }
+  if (String(displayName).length > 50 || String(body.comment ?? '').length > 1000) {
+    return NextResponse.json({ error: '入力内容が長すぎます' }, { status: 400 });
   }
 
   try {

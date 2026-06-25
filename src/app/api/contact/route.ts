@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendMail, escapeHtml } from '@/lib/mail';
+import { rateLimit, getClientIp } from '@/lib/rateLimit';
 
 const CATEGORIES: Record<string, string> = {
   request: '要望',
@@ -12,6 +13,10 @@ const MAX_MESSAGE = 4000;
 const MAX_CONTACT = 200;
 
 export async function POST(request: NextRequest) {
+  if (!rateLimit(`contact:${getClientIp(request)}`, 5, 60_000)) {
+    return NextResponse.json({ error: 'リクエストが多すぎます。少し時間をおいてください。' }, { status: 429 });
+  }
+
   let body: Record<string, unknown>;
   try {
     body = await request.json();

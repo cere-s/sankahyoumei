@@ -4,6 +4,7 @@ import { getEntryById } from '@/lib/entries';
 import { getEventById } from '@/lib/events';
 import { getSiteUrl } from '@/lib/site';
 import { DEMO } from '@/lib/demo';
+import { rateLimit, getClientIp } from '@/lib/rateLimit';
 
 const REPORT_REASONS: Record<string, string> = {
   impersonation: 'なりすまし',
@@ -23,6 +24,10 @@ function escapeHtml(s: string): string {
 }
 
 export async function POST(request: NextRequest) {
+  if (!rateLimit(`report:${getClientIp(request)}`, 5, 60_000)) {
+    return NextResponse.json({ error: 'リクエストが多すぎます。少し時間をおいてください。' }, { status: 429 });
+  }
+
   let body: Record<string, unknown>;
   try {
     body = await request.json();
