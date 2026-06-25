@@ -123,14 +123,14 @@ CREATE POLICY "entries_public_select"
 CREATE POLICY "entries_auth_insert"
   ON participation_entries FOR INSERT
   TO authenticated
-  WITH CHECK (auth.uid() = user_id);
+  WITH CHECK ((SELECT auth.uid()) = user_id);
 
 -- participation_entries: ログインユーザーは自分の参加表明のみ更新可能
 CREATE POLICY "entries_owner_update"
   ON participation_entries FOR UPDATE
   TO authenticated
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+  USING ((SELECT auth.uid()) = user_id)
+  WITH CHECK ((SELECT auth.uid()) = user_id);
 
 -- 旧トークン方式の作成・編集・削除は service_role でサーバー側検証後に実行する（RLSバイパス）
 
@@ -164,10 +164,10 @@ CREATE POLICY "profiles_public_select"
 CREATE POLICY "profiles_owner_insert"
   ON profiles FOR INSERT
   TO authenticated
-  WITH CHECK (auth.uid() = id);
+  WITH CHECK ((SELECT auth.uid()) = id);
 
 CREATE POLICY "profiles_owner_update"
   ON profiles FOR UPDATE
   TO authenticated
-  USING (auth.uid() = id)
-  WITH CHECK (auth.uid() = id);
+  USING ((SELECT auth.uid()) = id)
+  WITH CHECK ((SELECT auth.uid()) = id);

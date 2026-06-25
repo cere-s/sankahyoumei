@@ -39,12 +39,12 @@ CREATE POLICY "profiles_public_select"
 DROP POLICY IF EXISTS "profiles_owner_insert" ON profiles;
 CREATE POLICY "profiles_owner_insert"
   ON profiles FOR INSERT TO authenticated
-  WITH CHECK (auth.uid() = id);
+  WITH CHECK ((SELECT auth.uid()) = id);
 
 DROP POLICY IF EXISTS "profiles_owner_update" ON profiles;
 CREATE POLICY "profiles_owner_update"
   ON profiles FOR UPDATE TO authenticated
-  USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+  USING ((SELECT auth.uid()) = id) WITH CHECK ((SELECT auth.uid()) = id);
 
 -- participation_entries: 旧「全員INSERT可」を廃止し、ログイン本人INSERT/UPDATEに置き換え
 DROP POLICY IF EXISTS "entries_public_insert" ON participation_entries;
@@ -52,12 +52,12 @@ DROP POLICY IF EXISTS "entries_public_insert" ON participation_entries;
 DROP POLICY IF EXISTS "entries_auth_insert" ON participation_entries;
 CREATE POLICY "entries_auth_insert"
   ON participation_entries FOR INSERT TO authenticated
-  WITH CHECK (auth.uid() = user_id);
+  WITH CHECK ((SELECT auth.uid()) = user_id);
 
 DROP POLICY IF EXISTS "entries_owner_update" ON participation_entries;
 CREATE POLICY "entries_owner_update"
   ON participation_entries FOR UPDATE TO authenticated
-  USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+  USING ((SELECT auth.uid()) = user_id) WITH CHECK ((SELECT auth.uid()) = user_id);
 
 -- 4) 既存行の auth_status を補正
 --    user_id があれば verified_x、編集トークンがあれば legacy_token、その他は unverified
