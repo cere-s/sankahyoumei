@@ -1,11 +1,10 @@
 import type { Metadata } from 'next';
 import { getEntriesByUserId } from '@/lib/entries';
-import { getEventById } from '@/lib/events';
+import { getEventsByIds } from '@/lib/events';
 import { getCurrentAuth } from '@/lib/auth';
 import { EntryCard } from '@/components/EntryCard';
 import { XLoginButton } from '@/components/auth/XLoginButton';
 import { ParticipatingEventsExport, type ExportEvent } from '@/components/ParticipatingEventsExport';
-import type { Event } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,13 +33,8 @@ export default async function MyPage() {
 
   const entries = await getEntriesByUserId(user.id);
 
-  // 参加表明に紐づくイベントを取得
-  const eventIds = [...new Set(entries.map((e) => e.eventId))];
-  const eventResults = await Promise.all(eventIds.map((id) => getEventById(id)));
-  const eventMap = new Map<string, Event>();
-  eventResults.forEach((ev) => {
-    if (ev) eventMap.set(ev.id, ev);
-  });
+  // 参加表明に紐づくイベントを1クエリでまとめて取得（N+1回避）
+  const eventMap = await getEventsByIds(entries.map((e) => e.eventId));
 
   // 出力用：参加イベント（重複排除・日付昇順）
   const exportEvents: ExportEvent[] = [...eventMap.values()]

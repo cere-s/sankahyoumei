@@ -69,7 +69,8 @@ CREATE TABLE IF NOT EXISTS participation_entries (
   user_id     UUID REFERENCES auth.users(id) ON DELETE SET NULL,  -- Xログインユーザー
   x_user_id          TEXT,                       -- X provider user id（スナップショット）
   x_username_snapshot TEXT,                       -- 作成時点のXユーザー名
-  auth_status TEXT NOT NULL DEFAULT 'unverified', -- verified_x | unverified | legacy_token | hidden
+  auth_status TEXT NOT NULL DEFAULT 'unverified'
+    CHECK (auth_status IN ('verified_x', 'unverified', 'legacy_token', 'hidden')),
   is_verified_x BOOLEAN DEFAULT FALSE,            -- 旧ツイート照合フラグ（互換のため残置）
   is_hidden   BOOLEAN DEFAULT FALSE,              -- 削除フラグ（物理削除の代替）
 
@@ -80,6 +81,9 @@ CREATE TABLE IF NOT EXISTS participation_entries (
 -- ---- インデックス ----
 CREATE INDEX IF NOT EXISTS idx_entries_event_id ON participation_entries(event_id);
 CREATE INDEX IF NOT EXISTS idx_entries_is_hidden ON participation_entries(is_hidden);
+CREATE INDEX IF NOT EXISTS idx_entries_user_id ON participation_entries(user_id);
+CREATE INDEX IF NOT EXISTS idx_entries_x_id ON participation_entries(x_id);
+CREATE INDEX IF NOT EXISTS idx_events_date ON events(date);
 
 -- ---- updated_at 自動更新トリガー ----
 CREATE OR REPLACE FUNCTION update_updated_at()

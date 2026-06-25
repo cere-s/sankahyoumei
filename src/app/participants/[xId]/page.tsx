@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getEntriesByXId } from '@/lib/entries';
-import { getEventById } from '@/lib/events';
+import { getEventsByIds } from '@/lib/events';
 import {
   PARTICIPATION_TYPE_LABELS,
   PARTICIPATION_TYPE_COLORS,
@@ -9,7 +9,6 @@ import {
   COSPLAY_STATUS_COLORS,
   formatDate,
 } from '@/lib/utils';
-import type { Event } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,11 +23,8 @@ export default async function ParticipantPage({ params }: Props) {
 
   if (entries.length === 0) notFound();
 
-  const eventIds = [...new Set(entries.map((e) => e.eventId))];
-  const eventResults = await Promise.all(eventIds.map((id) => getEventById(id)));
-  const eventMap = Object.fromEntries(
-    eventResults.filter((e): e is Event => e !== null).map((e) => [e.id, e]),
-  );
+  // 紐づくイベントを1クエリでまとめて取得（N+1回避）
+  const eventMap = await getEventsByIds(entries.map((e) => e.eventId));
 
   const displayName = entries[0].displayName;
 
@@ -51,7 +47,7 @@ export default async function ParticipantPage({ params }: Props) {
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {entries.map((entry) => {
-          const event = eventMap[entry.eventId];
+          const event = eventMap.get(entry.eventId);
           return (
             <Link
               key={entry.id}

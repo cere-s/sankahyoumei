@@ -53,6 +53,30 @@ export async function getAllEvents(): Promise<Event[]> {
   return (data as DBEvent[]).map(dbToEvent);
 }
 
+/** 複数IDのイベントをまとめて取得（N+1回避） */
+export async function getEventsByIds(ids: string[]): Promise<Map<string, Event>> {
+  const map = new Map<string, Event>();
+  const unique = [...new Set(ids)];
+  if (unique.length === 0) return map;
+
+  if (DEMO) {
+    for (const id of unique) {
+      const e = demoGetEventById(id);
+      if (e) map.set(e.id, e);
+    }
+    return map;
+  }
+
+  const supabase = createServerClient();
+  const { data, error } = await supabase.from('events').select('*').in('id', unique);
+  if (error) throw new Error(`イベント取得エラー: ${error.message}`);
+  for (const row of (data as DBEvent[]) ?? []) {
+    const e = dbToEvent(row);
+    map.set(e.id, e);
+  }
+  return map;
+}
+
 export async function getEventById(id: string): Promise<Event | null> {
   if (DEMO) return demoGetEventById(id);
   const supabase = createServerClient();
