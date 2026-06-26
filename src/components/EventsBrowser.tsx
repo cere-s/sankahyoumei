@@ -1,11 +1,12 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Event } from '@/types';
 import { EventCard } from './EventCard';
 
 // タブの表示順（未知の地方は末尾に出現順で追加）
 const REGION_ORDER = ['関東', '東海', '関西'];
+const PAGE_SIZE = 36;
 
 function normalize(s: string) {
   return s.toLowerCase().replace(/\s+/g, '');
@@ -59,8 +60,20 @@ export function EventsBrowser({ events, hasImported, today, initialQ = '', initi
   const sorted = useMemo(() => {
     const upcoming = filtered.filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
     const past = filtered.filter((e) => e.date < today).sort((a, b) => b.date.localeCompare(a.date));
-    return { upcoming, past, all: [...upcoming, ...past] };
+    return { upcoming, past };
   }, [filtered, today]);
+
+  // 段階表示（一度に全部描画しない）
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [q, region]);
+
+  const upcomingShown = sorted.upcoming.slice(0, visibleCount);
+  const pastBudget = Math.max(0, visibleCount - sorted.upcoming.length);
+  const pastShown = sorted.past.slice(0, pastBudget);
+  const shownCount = upcomingShown.length + pastShown.length;
+  const hasMore = shownCount < filtered.length;
 
   // 共有用に URL を更新（サーバー往復は発生させない）
   function syncUrl(nextQ: string, nextRegion: string) {
@@ -140,19 +153,22 @@ export function EventsBrowser({ events, hasImported, today, initialQ = '', initi
         </p>
       ) : (
         <>
-          {hasFilter && <p className="text-xs text-gray-500 mb-3">{filtered.length} 件見つかりました</p>}
+          <p className="text-xs text-gray-500 mb-3">
+            {hasFilter ? `${filtered.length} 件見つかりました` : `全 ${filtered.length} 件`}
+            <span className="text-gray-400">（{shownCount}件表示中）</span>
+          </p>
 
           {/* 開催予定 */}
-          {sorted.upcoming.length > 0 && (
+          {upcomingShown.length > 0 && (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {sorted.upcoming.map((event) => (
+              {upcomingShown.map((event) => (
                 <EventCard key={event.id} event={event} today={today} />
               ))}
             </div>
           )}
 
           {/* 終了したイベント */}
-          {sorted.past.length > 0 && (
+          {pastShown.length > 0 && (
             <div className="mt-8">
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-sm font-bold text-gray-500">終了したイベント</span>
@@ -160,10 +176,21 @@ export function EventsBrowser({ events, hasImported, today, initialQ = '', initi
                 <span className="flex-1 h-px bg-gray-200" />
               </div>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {sorted.past.map((event) => (
+                {pastShown.map((event) => (
                   <EventCard key={event.id} event={event} today={today} />
                 ))}
               </div>
+            </div>
+          )}
+
+          {hasMore && (
+            <div className="mt-6 flex justify-center">
+              <button
+                onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+                className="bg-white border border-violet-200 text-violet-700 rounded-xl px-6 py-2.5 text-sm font-bold hover:bg-violet-50 transition-colors"
+              >
+                もっと見る（残り {filtered.length - shownCount} 件）
+              </button>
             </div>
           )}
         </>
