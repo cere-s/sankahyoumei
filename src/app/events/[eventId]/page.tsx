@@ -4,7 +4,7 @@ import { getEventById } from '@/lib/events';
 import { getEntriesByEventId } from '@/lib/entries';
 import { ParticipantList } from '@/components/ParticipantList';
 import { ParticipationNotice } from '@/components/ParticipationNotice';
-import { formatDate } from '@/lib/utils';
+import { formatDate, todayISO } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,12 +24,16 @@ export default async function EventDetailPage({ params }: Props) {
   const hasDetails = Boolean(
     event.organizer || event.address || event.officialUrl || event.xUrl || (event.isImported && event.sourceUrl)
   );
+  const isPast = event.date < todayISO();
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
       {/* ヒーローカード */}
       <div className="rounded-2xl bg-gradient-to-br from-violet-600 to-violet-500 text-white p-6 shadow-sm mb-5">
         <div className="flex flex-wrap items-center gap-1.5 mb-3">
+          {isPast && (
+            <span className="text-[11px] bg-white text-gray-700 px-2 py-0.5 rounded-full font-bold">終了したイベント</span>
+          )}
           {event.region && (
             <span className="text-[11px] bg-white/20 px-2 py-0.5 rounded-full font-medium">{event.region}</span>
           )}

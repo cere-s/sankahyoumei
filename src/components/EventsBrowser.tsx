@@ -14,11 +14,12 @@ function normalize(s: string) {
 interface Props {
   events: Event[];
   hasImported: boolean;
+  today: string;
   initialQ?: string;
   initialRegion?: string;
 }
 
-export function EventsBrowser({ events, hasImported, initialQ = '', initialRegion = '' }: Props) {
+export function EventsBrowser({ events, hasImported, today, initialQ = '', initialRegion = '' }: Props) {
   const [q, setQ] = useState(initialQ);
   const [region, setRegion] = useState(initialRegion);
 
@@ -53,6 +54,13 @@ export function EventsBrowser({ events, hasImported, initialQ = '', initialRegio
       return true;
     });
   }, [events, q, region]);
+
+  // 開催予定（近い順）を先に、終了したイベントは後ろ（最近終わった順）に
+  const sorted = useMemo(() => {
+    const upcoming = filtered.filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
+    const past = filtered.filter((e) => e.date < today).sort((a, b) => b.date.localeCompare(a.date));
+    return { upcoming, past, all: [...upcoming, ...past] };
+  }, [filtered, today]);
 
   // 共有用に URL を更新（サーバー往復は発生させない）
   function syncUrl(nextQ: string, nextRegion: string) {
@@ -133,11 +141,31 @@ export function EventsBrowser({ events, hasImported, initialQ = '', initialRegio
       ) : (
         <>
           {hasFilter && <p className="text-xs text-gray-500 mb-3">{filtered.length} 件見つかりました</p>}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
+
+          {/* 開催予定 */}
+          {sorted.upcoming.length > 0 && (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {sorted.upcoming.map((event) => (
+                <EventCard key={event.id} event={event} today={today} />
+              ))}
+            </div>
+          )}
+
+          {/* 終了したイベント */}
+          {sorted.past.length > 0 && (
+            <div className="mt-8">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-sm font-bold text-gray-500">終了したイベント</span>
+                <span className="text-xs text-gray-400">{sorted.past.length}件</span>
+                <span className="flex-1 h-px bg-gray-200" />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {sorted.past.map((event) => (
+                  <EventCard key={event.id} event={event} today={today} />
+                ))}
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

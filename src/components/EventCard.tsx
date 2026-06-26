@@ -4,15 +4,23 @@ import { formatDate } from '@/lib/utils';
 
 interface Props {
   event: Event;
+  /** 今日(YYYY-MM-DD)。渡すと過去イベントに「終了」バッジを表示 */
+  today?: string;
 }
 
-export function EventCard({ event }: Props) {
+export function EventCard({ event, today }: Props) {
+  const isPast = Boolean(today && event.date < today);
   return (
     <Link href={`/events/${event.id}`} className="block h-full">
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:shadow-md hover:border-violet-100 transition-all h-full flex flex-col">
+      <div className={`rounded-xl border shadow-sm p-4 transition-all h-full flex flex-col ${isPast ? 'bg-gray-50 border-gray-200 hover:border-gray-300' : 'bg-white border-gray-100 hover:shadow-md hover:border-violet-100'}`}>
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 flex-wrap">
+              {isPast && (
+                <span className="text-[10px] bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded font-bold shrink-0">
+                  終了
+                </span>
+              )}
               {event.region && (
                 <span className="text-[10px] bg-violet-50 text-violet-700 border border-violet-200 px-1.5 py-0.5 rounded font-medium shrink-0">
                   {event.region}
