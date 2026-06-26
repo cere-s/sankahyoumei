@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createEntry, getEntriesByEventId } from '@/lib/entries';
+import { createEntry, getEntriesByEventId, setEntryImage } from '@/lib/entries';
 import { getCurrentAuth } from '@/lib/auth';
 import { rateLimit, getClientIp } from '@/lib/rateLimit';
+import { validateImageFile, uploadEntryImage } from '@/lib/imageUpload';
+import { r2Configured } from '@/lib/r2';
+import { DEMO } from '@/lib/demo';
 import type { ParticipationType, ParticipationEntry } from '@/types';
 
 export async function GET(request: NextRequest) {
@@ -23,9 +26,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'リクエストが多すぎます。少し時間をおいてください。' }, { status: 429 });
   }
 
+  // multipart（画像同梱）と JSON の両対応
   let body: Record<string, unknown>;
+  let imageFile: File | null = null;
+  const contentTypeHeader = request.headers.get('content-type') ?? '';
   try {
-    body = await request.json();
+    if (contentTypeHeader.includes('multipart/form-data')) {
+      const form = await request.formData();
+      body = JSON.parse(String(form.get('payload') ?? '{}'));
+      const f = form.get('file');
+      if (f instanceof File && f.size > 0) imageFile = f;
+    } else {
+      body = await request.json();
+    }
   } catch {
     return NextResponse.json({ error: '不正なリクエストです' }, { status: 400 });
   }
@@ -51,6 +64,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '入力内容が長すぎます' }, { status: 400 });
   }
 
+  // 画像があれば作成前に検証（不正なら作成せず弾く）
+  let validatedImage = null;
+  if (imageFile) {
+    try {
+      validatedImage = await validateImageFile(imageFile);
+    } catch (e) {
+      return NextResponse.json({ error: String(e).replace(/^Error:\s*/, '') }, { status: 400 });
+    }
+  }
+
   try {
     const result = await createEntry({
       eventId: String(eventId),
@@ -60,7 +83,6 @@ export async function POST(request: NextRequest) {
       participationDate: String(participationDate),
       comment: String(body.comment ?? '').trim(),
       note: body.note ? String(body.note).trim() : undefined,
-      imageUrl: body.imageUrl ? String(body.imageUrl).trim() : undefined,
       tweetUrl: body.tweetUrl ? String(body.tweetUrl).trim() : undefined,
       deletePassword: body.deletePassword ? String(body.deletePassword) : undefined,
       cosplayInfo: body.cosplayInfo as ParticipationEntry['cosplayInfo'] | undefined,
@@ -69,6 +91,21 @@ export async function POST(request: NextRequest) {
       xUserId: profile?.xUserId,
       xUsernameSnapshot: profile?.xUsername,
     });
+
+    // 検証済み画像を R2 へアップロードして紐づけ（失敗してもエントリーは作成済み）
+    if (validatedImage && !DEMO && r2Configured()) {
+      try {
+        const img = await uploadEntryImage(validatedImage, user.id, result.entry.id, result.entry.displayName);
+        await setEntryImage(result.entry.id, img);
+        result.entry.imageUrl = img.imageUrl;
+      } catch (e) {
+        console.error('画像の添付に失敗:', e);
+        return NextResponse.json(
+          { ...result, imageWarning: '参加表明は作成されましたが、画像のアップロードに失敗しました。編集画面から再度お試しください。' },
+          { status: 201 }
+        );
+      }
+    }
 
     return NextResponse.json(result, { status: 201 });
   } catch (e) {

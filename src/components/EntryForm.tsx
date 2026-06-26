@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import type {
   ParticipationType,
@@ -13,7 +13,6 @@ import type {
   PhotographerInfo,
 } from '@/types';
 import type { CosplaySuggestions } from '@/lib/entries';
-import { ImageUpload } from './ImageUpload';
 import {
   PARTICIPATION_TYPE_LABELS,
   COSPLAY_SHOOTING_STATUS_LABELS,
@@ -99,11 +98,6 @@ function SuccessView({
         <p className="text-sm text-gray-500 mt-1">参加者一覧に表示されます</p>
       </div>
 
-      {/* 作成直後に画像を追加できる */}
-      <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
-        <ImageUpload entryId={entryId} />
-      </div>
-
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-3">
         <p className="text-sm font-bold text-amber-900">⚠️ 編集URLを保存してください</p>
         <p className="text-xs text-amber-800 leading-relaxed">
@@ -152,6 +146,12 @@ export function EntryForm({ eventId, eventName, defaultDate, suggestions = EMPTY
   const [tweetUrl, setTweetUrl] = useState('');
   const [deletePassword, setDeletePassword] = useState('');
 
+  // 画像（送信時に作成と同時アップロード）
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageError, setImageError] = useState('');
+  const imageInputRef = useRef<HTMLInputElement>(null);
+
   // Cosplay
   const [workName, setWorkName] = useState(defaults?.cosplayInfo?.workName ?? '');
   const [characterName, setCharacterName] = useState(defaults?.cosplayInfo?.characterName ?? '');
@@ -186,6 +186,31 @@ export function EntryForm({ eventId, eventName, defaultDate, suggestions = EMPTY
     setShootingStyles((prev) =>
       prev.includes(style) ? prev.filter((s) => s !== style) : [...prev, style]
     );
+  }
+
+  function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setImageError('');
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(f.type)) {
+      setImageError('jpg / png / webp 形式の画像を選んでください');
+      return;
+    }
+    if (f.size > 3 * 1024 * 1024) {
+      setImageError('画像は3MB以下にしてください');
+      return;
+    }
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
+    setImageFile(f);
+    setImagePreview(URL.createObjectURL(f));
+  }
+
+  function clearImage() {
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
+    setImageFile(null);
+    setImagePreview(null);
+    setImageError('');
+    if (imageInputRef.current) imageInputRef.current.value = '';
   }
 
   function validate(): boolean {
@@ -236,11 +261,20 @@ export function EntryForm({ eventId, eventName, defaultDate, suggestions = EMPTY
         };
       }
 
-      const res = await fetch('/api/entries', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+      // 画像があれば multipart で同時送信、無ければ JSON
+      let res: Response;
+      if (imageFile) {
+        const fd = new FormData();
+        fd.append('payload', JSON.stringify(body));
+        fd.append('file', imageFile);
+        res = await fetch('/api/entries', { method: 'POST', body: fd });
+      } else {
+        res = await fetch('/api/entries', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+      }
 
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
@@ -408,9 +442,38 @@ export function EntryForm({ eventId, eventName, defaultDate, suggestions = EMPTY
             rows={3} className={`${inputClass} resize-none`} />
         </Field>
         <Field label="参加表明画像（任意）">
-          <p className="text-xs text-gray-400 leading-relaxed">
-            画像は<span className="font-medium">参加表明した直後の画面</span>でアップロードできます（推奨比率 16:9 / 1200×675px）。あとから編集画面でも変更できます。
+          {/* プレビュー枠（16:9・CLS対策で高さ固定） */}
+          <div className="relative w-full aspect-video rounded-xl border border-gray-200 bg-gray-100 overflow-hidden flex items-center justify-center">
+            {imagePreview ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={imagePreview} alt="プレビュー" className="w-full h-full object-contain" />
+            ) : (
+              <div className="text-gray-400 text-xs flex flex-col items-center gap-1">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M18 12h.008M3 16.5V7.5A2.25 2.25 0 015.25 5.25h13.5A2.25 2.25 0 0121 7.5v9a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 16.5z" />
+                </svg>
+                画像なし
+              </div>
+            )}
+          </div>
+          <div className="flex gap-2 mt-2">
+            <button type="button" onClick={() => imageInputRef.current?.click()}
+              className="flex-1 border border-violet-300 text-violet-700 rounded-xl py-2 text-sm font-medium hover:bg-violet-50 transition-colors">
+              {imagePreview ? '画像を変更' : '画像を選ぶ'}
+            </button>
+            {imagePreview && (
+              <button type="button" onClick={clearImage}
+                className="px-4 border border-red-300 text-red-700 rounded-xl py-2 text-sm hover:bg-red-50 transition-colors">
+                削除
+              </button>
+            )}
+          </div>
+          <input ref={imageInputRef} type="file" accept="image/jpeg,image/png,image/webp"
+            onChange={handleImageSelect} className="hidden" />
+          <p className="mt-1 text-xs text-gray-400">
+            推奨比率 16:9 / 推奨サイズ 1200×675px。jpg・png・webp、3MBまで。送信時にアップロードされます。
           </p>
+          {imageError && <p className="mt-1 text-xs text-red-600">{imageError}</p>}
         </Field>
         <Field label="ツイートURL（任意）">
           <input type="url" value={tweetUrl} onChange={(e) => setTweetUrl(e.target.value)}
