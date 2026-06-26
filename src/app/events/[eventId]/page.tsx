@@ -4,7 +4,7 @@ import { getEventById } from '@/lib/events';
 import { getEntriesByEventId } from '@/lib/entries';
 import { ParticipantList } from '@/components/ParticipantList';
 import { ParticipationNotice } from '@/components/ParticipationNotice';
-import { formatDate, todayISO } from '@/lib/utils';
+import { formatDate, todayISO, parseHashtags } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,9 +37,9 @@ export default async function EventDetailPage({ params }: Props) {
           {event.region && (
             <span className="text-[11px] bg-white/20 px-2 py-0.5 rounded-full font-medium">{event.region}</span>
           )}
-          {event.hashtag && (
-            <span className="text-[11px] bg-white/20 px-2 py-0.5 rounded-full font-medium">#{event.hashtag}</span>
-          )}
+          {parseHashtags(event.hashtag).map((t) => (
+            <span key={t} className="text-[11px] bg-white/20 px-2 py-0.5 rounded-full font-medium">#{t}</span>
+          ))}
           {event.isImported && (
             <span className="text-[11px] bg-amber-300/90 text-amber-900 px-2 py-0.5 rounded-full font-medium">外部取得</span>
           )}

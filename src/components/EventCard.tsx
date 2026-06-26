@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Event } from '@/types';
-import { formatDate } from '@/lib/utils';
+import { formatDate, parseHashtags } from '@/lib/utils';
 
 interface Props {
   event: Event;
@@ -36,10 +36,14 @@ export function EventCard({ event, today }: Props) {
             <p className="text-sm text-gray-500 mt-0.5">{formatDate(event.date)}</p>
             <p className="text-sm text-gray-500">{event.location}</p>
           </div>
-          {event.hashtag && (
-            <span className="text-xs bg-violet-50 text-violet-700 px-2 py-1 rounded-full shrink-0 font-medium">
-              #{event.hashtag}
-            </span>
+          {parseHashtags(event.hashtag).length > 0 && (
+            <div className="flex flex-col items-end gap-1 shrink-0">
+              {parseHashtags(event.hashtag).slice(0, 2).map((t) => (
+                <span key={t} className="text-xs bg-violet-50 text-violet-700 px-2 py-1 rounded-full font-medium">
+                  #{t}
+                </span>
+              ))}
+            </div>
           )}
         </div>
         <p className="mt-2 text-sm text-gray-600 line-clamp-2">{event.description}</p>

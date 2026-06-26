@@ -62,6 +62,15 @@ export const COSPLAY_STATUS_COLORS: Record<CosplayShootingStatus, string> = {
   no_shooting: 'bg-red-100 text-red-800',
 };
 
+/** ハッシュタグ文字列を複数タグ（#なし）に分解する。区切り: 空白 / カンマ(半角全角) / 読点 / # */
+export function parseHashtags(raw?: string): string[] {
+  if (!raw) return [];
+  return raw
+    .split(/[\s,、，#＃]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 /** ローカルタイムゾーンの今日を YYYY-MM-DD で返す */
 export function todayISO(): string {
   const d = new Date();

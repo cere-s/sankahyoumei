@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { getAllEvents } from '@/lib/events';
 import { getRecentEntries, getEntryCountsByEvent } from '@/lib/entries';
 import { EntryCard } from '@/components/EntryCard';
-import { formatDate, todayISO } from '@/lib/utils';
+import { formatDate, todayISO, parseHashtags } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -109,9 +109,9 @@ export default async function TopPage() {
                             {formatDate(event.date)} · {event.location}
                           </p>
                         </div>
-                        {event.hashtag && (
+                        {parseHashtags(event.hashtag)[0] && (
                           <span className="text-xs bg-violet-50 text-violet-700 px-2 py-1 rounded-full shrink-0">
-                            #{event.hashtag}
+                            #{parseHashtags(event.hashtag)[0]}
                           </span>
                         )}
                       </div>

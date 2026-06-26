@@ -18,6 +18,7 @@ import {
   COSPLAY_SHOOTING_STATUS_LABELS,
   PHOTOGRAPHER_FIRST_MEET_LABELS,
   PHOTOGRAPHER_SHOOTING_STYLE_LABELS,
+  parseHashtags,
 } from '@/lib/utils';
 
 /** 前回の参加表明から引き継ぐ初期値 */
@@ -86,11 +87,11 @@ function SuccessView({
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const editUrl = `${origin}/events/${eventId}/entries/${entryId}/edit?token=${editToken}`;
   const shareUrl = `${origin}/events/${eventId}/entries/${entryId}`;
-  const tag = eventHashtag?.replace(/^#/, '').trim();
+  const tags = parseHashtags(eventHashtag);
   const intentUrl =
     `https://twitter.com/intent/tweet?text=${encodeURIComponent(`「${eventName}」に参加表明しました！`)}` +
     `&url=${encodeURIComponent(shareUrl)}` +
-    (tag ? `&hashtags=${encodeURIComponent(tag)}` : '');
+    (tags.length ? `&hashtags=${encodeURIComponent(tags.join(','))}` : '');
 
   async function copyEditUrl() {
     await navigator.clipboard.writeText(editUrl);
