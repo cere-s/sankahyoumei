@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getEntryById, updateEntry, hideEntry } from '@/lib/entries';
 import { getCurrentUser } from '@/lib/auth';
+import { refreshOgImage } from '@/lib/og';
 
 type Params = Promise<{ entryId: string }>;
 
@@ -56,6 +57,7 @@ export async function PUT(request: NextRequest, { params }: { params: Params }) 
       cosplayInfo: body.cosplayInfo as Parameters<typeof updateEntry>[1]['cosplayInfo'],
       photographerInfo: body.photographerInfo as Parameters<typeof updateEntry>[1]['photographerInfo'],
     });
+    await refreshOgImage(entryId);
     return NextResponse.json(updated);
   } catch (e) {
     return errorResponse(e, 'PUT /api/entries/[entryId]');

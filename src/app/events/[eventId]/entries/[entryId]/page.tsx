@@ -33,9 +33,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const title = `${event?.name ?? 'コスプレイベント'}に参加表明しました`;
   const description = `${entry.displayName}さんの参加表明`;
-  // 編集時に古いOGP画像が残らないよう updatedAt をバージョンに付与
+  // R2に静的生成済みのOGP画像があればそれを使う（高速・確実）。
+  // 未生成時は動的生成APIにフォールバック（updatedAtでキャッシュバスト）。
   const v = entry.updatedAt ? Date.parse(entry.updatedAt) : '';
-  const ogImage = `/api/og/participation?id=${entry.id}&v=${v}`;
+  const ogImage = entry.ogImageUrl ?? `/api/og/participation?id=${entry.id}&v=${v}`;
 
   return {
     title,

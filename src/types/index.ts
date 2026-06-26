@@ -78,6 +78,8 @@ export interface ParticipationEntry {
   imageAlt?: string;
   imageWidth?: number;
   imageHeight?: number;
+  ogImageUrl?: string;
+  ogImageKey?: string;
   tweetUrl?: string;
   isVerifiedX?: boolean;
   userId?: string;

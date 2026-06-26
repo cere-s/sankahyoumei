@@ -38,6 +38,8 @@ interface DBEntry {
   image_width: number | null;
   image_height: number | null;
   image_updated_at: string | null;
+  og_image_url: string | null;
+  og_image_key: string | null;
   tweet_url: string | null;
   comment: string | null;
   note: string | null;
@@ -68,6 +70,8 @@ function dbToEntry(row: DBEntry): ParticipationEntry {
     imageAlt: row.image_alt ?? undefined,
     imageWidth: row.image_width ?? undefined,
     imageHeight: row.image_height ?? undefined,
+    ogImageUrl: row.og_image_url ?? undefined,
+    ogImageKey: row.og_image_key ?? undefined,
     tweetUrl: row.tweet_url ?? undefined,
     isVerifiedX: row.is_verified_x ?? false,
     userId: row.user_id ?? undefined,
@@ -509,6 +513,16 @@ export async function setEntryImage(entryId: string, input: EntryImageInput): Pr
     })
     .eq('id', entryId);
   if (error) throw new Error(`画像更新エラー: ${error.message}`);
+}
+
+/** OGP画像（R2静的ホスティング）のURL/keyを保存。updated_at は変えない */
+export async function setEntryOgImage(entryId: string, url: string | null, key: string | null): Promise<void> {
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from('participation_entries')
+    .update({ og_image_url: url, og_image_key: key })
+    .eq('id', entryId);
+  if (error) throw new Error(`OGP画像更新エラー: ${error.message}`);
 }
 
 export async function clearEntryImage(entryId: string): Promise<void> {

@@ -3,6 +3,7 @@ import { createEntry, getEntriesByEventId, setEntryImage } from '@/lib/entries';
 import { getCurrentAuth } from '@/lib/auth';
 import { rateLimit, getClientIp } from '@/lib/rateLimit';
 import { validateImageFile, uploadEntryImage } from '@/lib/imageUpload';
+import { refreshOgImage } from '@/lib/og';
 import { r2Configured } from '@/lib/r2';
 import { DEMO } from '@/lib/demo';
 import type { ParticipationType, ParticipationEntry } from '@/types';
@@ -100,12 +101,16 @@ export async function POST(request: NextRequest) {
         result.entry.imageUrl = img.imageUrl;
       } catch (e) {
         console.error('画像の添付に失敗:', e);
+        await refreshOgImage(result.entry.id);
         return NextResponse.json(
           { ...result, imageWarning: '参加表明は作成されましたが、画像のアップロードに失敗しました。編集画面から再度お試しください。' },
           { status: 201 }
         );
       }
     }
+
+    // OGP画像をR2へ静的生成（共有時に高速・確実に表示されるように）
+    await refreshOgImage(result.entry.id);
 
     return NextResponse.json(result, { status: 201 });
   } catch (e) {

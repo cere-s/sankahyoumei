@@ -4,6 +4,7 @@ import { imageSize } from 'image-size';
 import { getCurrentUser } from '@/lib/auth';
 import { getEntryImageInfo, setEntryImage, clearEntryImage } from '@/lib/entries';
 import { r2Configured, r2Put, r2Delete, r2PublicUrl } from '@/lib/r2';
+import { refreshOgImage } from '@/lib/og';
 import { isAdmin } from '@/lib/admin';
 import { rateLimit, getClientIp } from '@/lib/rateLimit';
 import { DEMO } from '@/lib/demo';
@@ -118,6 +119,9 @@ export async function POST(request: NextRequest, { params }: { params: Params })
     return NextResponse.json({ error: 'アップロードに失敗しました' }, { status: 502 });
   }
 
+  // 画像が変わったのでOGP画像を再生成
+  await refreshOgImage(entryId);
+
   return NextResponse.json({ imageUrl, imageWidth: width, imageHeight: height, imageAlt });
 }
 
@@ -153,6 +157,9 @@ export async function DELETE(request: NextRequest, { params }: { params: Params 
     console.error('画像削除失敗:', e);
     return NextResponse.json({ error: '削除に失敗しました' }, { status: 502 });
   }
+
+  // 画像が変わったのでOGP画像を再生成
+  await refreshOgImage(entryId);
 
   return NextResponse.json({ success: true });
 }

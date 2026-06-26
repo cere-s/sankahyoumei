@@ -63,6 +63,9 @@ CREATE TABLE IF NOT EXISTS participation_entries (
   image_width      INTEGER,
   image_height     INTEGER,
   image_updated_at TIMESTAMPTZ,
+  -- OGP画像（R2に静的ホスティング）
+  og_image_url     TEXT,
+  og_image_key     TEXT,
   tweet_url TEXT,
   comment   TEXT,
   note      TEXT,
