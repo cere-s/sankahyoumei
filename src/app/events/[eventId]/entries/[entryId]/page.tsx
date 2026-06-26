@@ -78,6 +78,18 @@ export default async function EntryDetailPage({ params }: Props) {
           </div>
         )}
 
+        {/* 参加表明画像（16:9・object-contain・CLS対策で高さ固定） */}
+        {entry.imageUrl && (
+          <div className="w-full aspect-video rounded-lg bg-gray-100 overflow-hidden mb-4 flex items-center justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={entry.imageUrl}
+              alt={entry.imageAlt ?? `${entry.displayName} の参加表明画像`}
+              className="w-full h-full object-contain"
+            />
+          </div>
+        )}
+
         <dl className="space-y-2 text-sm">
           <div className="flex gap-2">
             <dt className="text-gray-400 shrink-0 w-20">イベント</dt>

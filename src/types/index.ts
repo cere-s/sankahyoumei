@@ -74,6 +74,10 @@ export interface ParticipationEntry {
   comment: string;
   note?: string;
   imageUrl?: string;
+  imageKey?: string;
+  imageAlt?: string;
+  imageWidth?: number;
+  imageHeight?: number;
   tweetUrl?: string;
   isVerifiedX?: boolean;
   userId?: string;

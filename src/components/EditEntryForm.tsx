@@ -15,6 +15,7 @@ import {
   PHOTOGRAPHER_SHOOTING_STYLE_LABELS,
 } from '@/lib/utils';
 import type { CosplaySuggestions } from '@/lib/entries';
+import { ImageUpload } from './ImageUpload';
 
 interface Props {
   entry: ParticipationEntry;
@@ -241,6 +242,9 @@ export function EditEntryForm({ entry, event, editToken, suggestions = EMPTY_SUG
           <textarea value={comment} onChange={(e) => setComment(e.target.value)}
             rows={3} className={`${inputClass} resize-none`} />
         </div>
+
+        {/* 画像（即時にアップロード・削除されるため、保存ボタンとは独立） */}
+        <ImageUpload entryId={entry.id} initialUrl={entry.imageUrl} />
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">ツイートURL（任意）</label>

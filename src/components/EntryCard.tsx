@@ -22,6 +22,23 @@ export function EntryCard({ entry, eventId, eventName }: Props) {
   return (
     <Link href={`/events/${eventId}/entries/${entry.id}`} className="block h-full">
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:shadow-md hover:border-violet-100 transition-all h-full flex flex-col">
+        {/* 参加表明画像（16:9・CLS対策で高さ固定。情報画像のため object-contain） */}
+        <div className="relative w-full aspect-video rounded-lg bg-gray-100 overflow-hidden mb-3 flex items-center justify-center">
+          {entry.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={entry.imageUrl}
+              alt={entry.imageAlt ?? `${entry.displayName} の参加表明画像`}
+              loading="lazy"
+              className="w-full h-full object-contain"
+            />
+          ) : (
+            <svg className="w-8 h-8 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M18 12h.008M3 16.5V7.5A2.25 2.25 0 015.25 5.25h13.5A2.25 2.25 0 0121 7.5v9a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 16.5z" />
+            </svg>
+          )}
+        </div>
+
         {eventName && (
           <p className="text-xs text-violet-600 font-medium mb-2">{eventName}</p>
         )}

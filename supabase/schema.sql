@@ -57,6 +57,12 @@ CREATE TABLE IF NOT EXISTS participation_entries (
 
   -- 共通任意
   image_url TEXT,
+  -- 画像（Cloudflare R2）
+  image_key        TEXT,
+  image_alt        TEXT,
+  image_width      INTEGER,
+  image_height     INTEGER,
+  image_updated_at TIMESTAMPTZ,
   tweet_url TEXT,
   comment   TEXT,
   note      TEXT,

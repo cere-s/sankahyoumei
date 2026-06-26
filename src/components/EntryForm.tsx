@@ -143,7 +143,6 @@ export function EntryForm({ eventId, eventName, defaultDate, suggestions = EMPTY
   const [displayName, setDisplayName] = useState(defaults?.displayName ?? '');
   const [participationDate, setParticipationDate] = useState(defaultDate);
   const [comment, setComment] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
   const [tweetUrl, setTweetUrl] = useState('');
   const [deletePassword, setDeletePassword] = useState('');
 
@@ -210,7 +209,6 @@ export function EntryForm({ eventId, eventName, defaultDate, suggestions = EMPTY
         participationType,
         participationDate,
         comment: comment.trim(),
-        imageUrl: imageUrl.trim() || undefined,
         tweetUrl: tweetUrl.trim() || undefined,
         deletePassword: deletePassword.trim() || undefined,
       };
@@ -403,9 +401,11 @@ export function EntryForm({ eventId, eventName, defaultDate, suggestions = EMPTY
             maxLength={1000} placeholder="ひとことメッセージ、当日の予定など"
             rows={3} className={`${inputClass} resize-none`} />
         </Field>
-        <Field label="画像URL（任意）">
-          <input type="url" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)}
-            placeholder="https://example.com/image.jpg" className={inputClass} />
+        <Field label="参加表明画像（任意）">
+          <p className="text-xs text-gray-400 leading-relaxed">
+            画像は<span className="font-medium">作成後</span>に追加できます（推奨比率 16:9 / 1200×675px）。
+            作成完了後の編集画面からアップロードしてください。
+          </p>
         </Field>
         <Field label="ツイートURL（任意）">
           <input type="url" value={tweetUrl} onChange={(e) => setTweetUrl(e.target.value)}

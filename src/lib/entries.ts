@@ -33,6 +33,11 @@ interface DBEntry {
   portfolio_url: string | null;
   shooting_style: string[] | null;
   image_url: string | null;
+  image_key: string | null;
+  image_alt: string | null;
+  image_width: number | null;
+  image_height: number | null;
+  image_updated_at: string | null;
   tweet_url: string | null;
   comment: string | null;
   note: string | null;
@@ -59,6 +64,10 @@ function dbToEntry(row: DBEntry): ParticipationEntry {
     comment: row.comment ?? '',
     note: row.note ?? undefined,
     imageUrl: row.image_url ?? undefined,
+    imageKey: row.image_key ?? undefined,
+    imageAlt: row.image_alt ?? undefined,
+    imageWidth: row.image_width ?? undefined,
+    imageHeight: row.image_height ?? undefined,
     tweetUrl: row.tweet_url ?? undefined,
     isVerifiedX: row.is_verified_x ?? false,
     userId: row.user_id ?? undefined,
@@ -457,4 +466,63 @@ export async function hideEntry(
     .eq('id', entryId);
 
   if (error) throw new Error(`削除エラー: ${error.message}`);
+}
+
+// ---- 画像（Cloudflare R2）----
+
+/** 画像の所有者判定と既存キーを取得（service role） */
+export async function getEntryImageInfo(
+  entryId: string
+): Promise<{ userId: string | null; imageKey: string | null; displayName: string } | null> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('participation_entries')
+    .select('user_id, image_key, display_name')
+    .eq('id', entryId)
+    .single();
+  if (error || !data) return null;
+  const row = data as { user_id: string | null; image_key: string | null; display_name: string };
+  return { userId: row.user_id, imageKey: row.image_key, displayName: row.display_name };
+}
+
+export interface EntryImageInput {
+  imageUrl: string;
+  imageKey: string;
+  imageAlt: string;
+  imageWidth: number;
+  imageHeight: number;
+}
+
+export async function setEntryImage(entryId: string, input: EntryImageInput): Promise<void> {
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from('participation_entries')
+    .update({
+      image_url: input.imageUrl,
+      image_key: input.imageKey,
+      image_alt: input.imageAlt,
+      image_width: input.imageWidth,
+      image_height: input.imageHeight,
+      image_updated_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', entryId);
+  if (error) throw new Error(`画像更新エラー: ${error.message}`);
+}
+
+export async function clearEntryImage(entryId: string): Promise<void> {
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from('participation_entries')
+    .update({
+      image_url: null,
+      image_key: null,
+      image_alt: null,
+      image_width: null,
+      image_height: null,
+      image_updated_at: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', entryId);
+  if (error) throw new Error(`画像削除エラー: ${error.message}`);
 }
