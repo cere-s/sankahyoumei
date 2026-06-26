@@ -60,16 +60,16 @@ export async function buildOgImageResponse(
     );
   }
 
-  const eventName = clip(event?.name ?? 'コスプレイベント', 36);
+  const eventName = clip(event?.name ?? 'コスプレイベント', 28);
   const dateStr = event ? formatDate(event.date) : '';
-  const displayName = clip(entry.displayName, 18);
+  const displayName = clip(entry.displayName, 13);
   const xId = `@${entry.xId}`;
   const typeLabel = PARTICIPATION_TYPE_LABELS[entry.participationType];
   const typeColor = TYPE_TAG[entry.participationType] ?? TYPE_TAG.undecided;
-  const work = entry.cosplayInfo ? clip(entry.cosplayInfo.workName, 24) : '';
-  const character = entry.cosplayInfo ? clip(entry.cosplayInfo.characterName, 20) : '';
+  const work = entry.cosplayInfo ? clip(entry.cosplayInfo.workName, 16) : '';
+  const character = entry.cosplayInfo ? clip(entry.cosplayInfo.characterName, 14) : '';
   const statusLabel = entry.cosplayInfo ? COSPLAY_SHOOTING_STATUS_LABELS[entry.cosplayInfo.shootingStatus] : '';
-  const targetWorks = entry.photographerInfo ? clip(entry.photographerInfo.targetWorks, 28) : '';
+  const targetWorks = entry.photographerInfo ? clip(entry.photographerInfo.targetWorks, 20) : '';
 
   const allText =
     SERVICE + SITE_TEXT + eventName + dateStr + displayName + xId + typeLabel + work + character + statusLabel + targetWorks +
@@ -79,38 +79,38 @@ export async function buildOgImageResponse(
   return new ImageResponse(
     (
       <div style={{ width: '100%', height: '100%', display: 'flex', background: '#ffffff', fontFamily: 'NotoSansJP' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '670px', height: '100%', padding: '52px 44px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '480px', height: '100%', padding: '46px 36px' }}>
           <div style={{ display: 'flex' }}>
-            <div style={{ display: 'flex', background: '#7c3aed', color: '#fff', fontSize: 22, padding: '7px 18px', borderRadius: 999 }}>{SERVICE}</div>
+            <div style={{ display: 'flex', background: '#7c3aed', color: '#fff', fontSize: 20, padding: '6px 16px', borderRadius: 999 }}>{SERVICE}</div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', fontSize: 28, color: '#7c3aed', marginBottom: 6 }}>{eventName}</div>
-            {dateStr ? <div style={{ display: 'flex', fontSize: 22, color: '#9ca3af', marginBottom: 18 }}>{dateStr}</div> : null}
-            <div style={{ display: 'flex', fontSize: 52, color: '#111827' }}>{displayName}</div>
-            <div style={{ display: 'flex', fontSize: 24, color: '#9ca3af', marginTop: 4 }}>{xId}</div>
-            <div style={{ display: 'flex', marginTop: 18 }}>
-              <div style={{ display: 'flex', background: typeColor.bg, color: typeColor.fg, fontSize: 22, padding: '6px 16px', borderRadius: 999, marginRight: 10 }}>{typeLabel}</div>
-              {statusLabel ? <div style={{ display: 'flex', background: '#ede9fe', color: '#6d28d9', fontSize: 22, padding: '6px 16px', borderRadius: 999 }}>{statusLabel}</div> : null}
+            <div style={{ display: 'flex', fontSize: 24, color: '#7c3aed', marginBottom: 6 }}>{eventName}</div>
+            {dateStr ? <div style={{ display: 'flex', fontSize: 20, color: '#9ca3af', marginBottom: 16 }}>{dateStr}</div> : null}
+            <div style={{ display: 'flex', fontSize: 42, color: '#111827' }}>{displayName}</div>
+            <div style={{ display: 'flex', fontSize: 22, color: '#9ca3af', marginTop: 4 }}>{xId}</div>
+            <div style={{ display: 'flex', marginTop: 16 }}>
+              <div style={{ display: 'flex', background: typeColor.bg, color: typeColor.fg, fontSize: 20, padding: '6px 14px', borderRadius: 999, marginRight: 8 }}>{typeLabel}</div>
+              {statusLabel ? <div style={{ display: 'flex', background: '#ede9fe', color: '#6d28d9', fontSize: 20, padding: '6px 14px', borderRadius: 999 }}>{statusLabel}</div> : null}
             </div>
             {entry.cosplayInfo ? (
-              <div style={{ display: 'flex', flexDirection: 'column', marginTop: 18 }}>
-                <div style={{ display: 'flex', fontSize: 26, color: '#374151' }}>作品：{work}</div>
-                <div style={{ display: 'flex', fontSize: 26, color: '#374151', marginTop: 6 }}>キャラ：{character}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', marginTop: 16 }}>
+                <div style={{ display: 'flex', fontSize: 23, color: '#374151' }}>作品：{work}</div>
+                <div style={{ display: 'flex', fontSize: 23, color: '#374151', marginTop: 6 }}>キャラ：{character}</div>
               </div>
             ) : null}
             {entry.photographerInfo && targetWorks ? (
-              <div style={{ display: 'flex', fontSize: 26, color: '#374151', marginTop: 18 }}>撮りたい作品：{targetWorks}</div>
+              <div style={{ display: 'flex', fontSize: 23, color: '#374151', marginTop: 16 }}>撮りたい作品：{targetWorks}</div>
             ) : null}
           </div>
-          <div style={{ display: 'flex', fontSize: 22, color: '#c4b5fd' }}>{SITE_TEXT}</div>
+          <div style={{ display: 'flex', fontSize: 20, color: '#c4b5fd' }}>{SITE_TEXT}</div>
         </div>
-        <div style={{ display: 'flex', width: '530px', height: '100%' }}>
+        <div style={{ display: 'flex', width: '720px', height: '100%' }}>
           {entry.imageUrl ? (
             // 16:9 の枠に中央配置。はみ出さないよう object-contain
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', padding: '0 40px', background: 'linear-gradient(135deg,#f5f3ff,#ecfeff)' }}>
-              <div style={{ display: 'flex', width: '450px', height: '253px', borderRadius: 20, overflow: 'hidden', background: '#e5e7eb' }}>
+              <div style={{ display: 'flex', width: '640px', height: '360px', borderRadius: 20, overflow: 'hidden', background: '#e5e7eb' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={entry.imageUrl} alt="" width={450} height={253} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                <img src={entry.imageUrl} alt="" width={640} height={360} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               </div>
             </div>
           ) : (
