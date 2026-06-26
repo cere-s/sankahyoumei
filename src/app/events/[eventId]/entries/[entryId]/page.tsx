@@ -87,18 +87,23 @@ export default async function EntryDetailPage({ params }: Props) {
             {PARTICIPATION_TYPE_LABELS[entry.participationType]}
           </span>
         </div>
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          {/* 本人のXプロフィールへ（わかりやすく強調） */}
           <a
             href={`https://x.com/${entry.xId}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-gray-400 hover:text-violet-500 hover:underline"
+            className="inline-flex items-center gap-1.5 bg-black text-white text-sm font-bold px-3.5 py-1.5 rounded-full hover:bg-gray-800 transition-colors"
           >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+            </svg>
             @{entry.xId}
+            <span className="text-white/60 font-normal">のXを見る</span>
           </a>
           <Link
             href={`/participants/${encodeURIComponent(entry.xId)}`}
-            className="text-xs text-violet-500 hover:underline"
+            className="text-xs text-violet-600 hover:underline px-2"
           >
             参加イベント一覧 →
           </Link>
