@@ -194,6 +194,18 @@ export default async function EntryDetailPage({ params }: Props) {
       {/* 本人のみ：編集・削除 */}
       {isOwner && <OwnerEntryActions eventId={event.id} entryId={entry.id} />}
 
+      {/* このイベントに自分も参加表明する導線 */}
+      <div className="rounded-2xl bg-gradient-to-br from-violet-600 to-violet-500 text-white p-5 mb-6 shadow-sm">
+        <p className="text-sm font-bold mb-0.5">あなたも参加予定ですか？</p>
+        <p className="text-xs text-violet-100 mb-3 line-clamp-1">「{event.name}」に参加表明できます</p>
+        <Link
+          href={`/events/${event.id}/entries/new`}
+          className="block w-full bg-white text-violet-700 text-center rounded-xl py-3 font-bold text-sm hover:bg-violet-50 transition-colors"
+        >
+          このイベントに参加表明する
+        </Link>
+      </div>
+
       {/* 埋め込みツイート */}
       {entry.tweetUrl && (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-6">
