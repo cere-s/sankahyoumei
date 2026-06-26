@@ -28,156 +28,81 @@ const COSPLAY_STATUSES: CosplayShootingStatus[] = [
   'no_shooting',
 ];
 
+const pillClass = (selected: boolean) =>
+  `text-xs px-3 py-1.5 rounded-full border font-medium whitespace-nowrap transition-colors ${
+    selected
+      ? 'bg-violet-600 text-white border-violet-600'
+      : 'bg-white text-gray-600 border-gray-200 hover:border-violet-400'
+  }`;
+
 export function ParticipantList({ entries, eventId }: Props) {
   const [filter, setFilter] = useState<EntryFilter>(EMPTY_FILTER);
-  const [showFilter, setShowFilter] = useState(false);
 
   const filtered = useMemo(() => filterEntries(entries, filter), [entries, filter]);
 
-  const hasActiveFilter =
-    filter.keyword ||
-    filter.participationType ||
-    filter.workName ||
-    filter.characterName ||
-    filter.shootingStatus;
-
-  function reset() {
-    setFilter(EMPTY_FILTER);
-  }
+  const hasActiveFilter = Boolean(filter.keyword || filter.participationType || filter.shootingStatus);
 
   return (
     <section>
       <div className="flex items-center justify-between mb-3">
-        <h2 className="font-bold text-gray-900 text-base">
+        <h2 className="font-bold text-gray-900 text-lg">
           参加者一覧
           <span className="ml-2 text-sm font-normal text-gray-500">
             {filtered.length}
             {hasActiveFilter ? `／${entries.length}` : ''}件
           </span>
         </h2>
-        <button
-          onClick={() => setShowFilter((v) => !v)}
-          className={`text-sm px-3 py-1.5 rounded-lg border transition-colors ${
-            hasActiveFilter
-              ? 'border-violet-400 text-violet-600 bg-violet-50'
-              : 'border-gray-200 text-gray-600 hover:border-gray-300'
-          }`}
-        >
-          {showFilter ? '絞り込みを閉じる' : '絞り込み'}
-          {hasActiveFilter && ' ●'}
-        </button>
+        {hasActiveFilter && (
+          <button onClick={() => setFilter(EMPTY_FILTER)} className="text-xs text-gray-500 hover:text-violet-600 hover:underline">
+            条件をリセット
+          </button>
+        )}
       </div>
 
-      {/* Keyword search — always visible */}
-      <div className="mb-3">
+      {/* 検索 */}
+      <div className="relative mb-3">
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+        </svg>
         <input
           type="search"
           value={filter.keyword}
           onChange={(e) => setFilter((f) => ({ ...f, keyword: e.target.value }))}
-          placeholder="名前・作品・キャラ・コメントで検索"
-          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
+          placeholder="作品・キャラ・名前で検索"
+          className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-400 placeholder:text-gray-400"
         />
       </div>
 
-      {showFilter && (
-        <div className="bg-gray-50 rounded-xl p-4 mb-4 space-y-3 border border-gray-100">
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1.5">参加種別</label>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setFilter((f) => ({ ...f, participationType: '' }))}
-                className={`text-xs px-3 py-1 rounded-full border transition-colors ${
-                  !filter.participationType
-                    ? 'bg-violet-600 text-white border-violet-600'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-                }`}
-              >
-                すべて
-              </button>
-              {PARTICIPATION_TYPES.map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setFilter((f) => ({ ...f, participationType: t }))}
-                  className={`text-xs px-3 py-1 rounded-full border transition-colors ${
-                    filter.participationType === t
-                      ? 'bg-violet-600 text-white border-violet-600'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-                  }`}
-                >
-                  {PARTICIPATION_TYPE_LABELS[t]}
-                </button>
-              ))}
-            </div>
-          </div>
+      {/* 種別ピル */}
+      <div className="flex gap-2 overflow-x-auto pb-1 mb-2 -mx-1 px-1">
+        <button onClick={() => setFilter((f) => ({ ...f, participationType: '' }))} className={pillClass(!filter.participationType)}>
+          すべて
+        </button>
+        {PARTICIPATION_TYPES.map((t) => (
+          <button key={t} onClick={() => setFilter((f) => ({ ...f, participationType: t }))} className={pillClass(filter.participationType === t)}>
+            {PARTICIPATION_TYPE_LABELS[t]}
+          </button>
+        ))}
+      </div>
 
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1.5">
-              撮影・交流スタンス
-            </label>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setFilter((f) => ({ ...f, shootingStatus: '' }))}
-                className={`text-xs px-3 py-1 rounded-full border transition-colors ${
-                  !filter.shootingStatus
-                    ? 'bg-violet-600 text-white border-violet-600'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-                }`}
-              >
-                すべて
-              </button>
-              {COSPLAY_STATUSES.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setFilter((f) => ({ ...f, shootingStatus: s }))}
-                  className={`text-xs px-3 py-1 rounded-full border transition-colors ${
-                    filter.shootingStatus === s
-                      ? 'bg-violet-600 text-white border-violet-600'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-                  }`}
-                >
-                  {COSPLAY_SHOOTING_STATUS_LABELS[s]}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">作品名</label>
-              <input
-                type="text"
-                value={filter.workName}
-                onChange={(e) => setFilter((f) => ({ ...f, workName: e.target.value }))}
-                placeholder="例：リゼロ"
-                className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">キャラ名</label>
-              <input
-                type="text"
-                value={filter.characterName}
-                onChange={(e) => setFilter((f) => ({ ...f, characterName: e.target.value }))}
-                placeholder="例：レム"
-                className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
-              />
-            </div>
-          </div>
-
-          {hasActiveFilter && (
-            <button onClick={reset} className="text-xs text-gray-500 underline">
-              絞り込みをリセット
-            </button>
-          )}
-        </div>
-      )}
+      {/* スタンスピル */}
+      <div className="flex gap-2 overflow-x-auto pb-1 mb-4 -mx-1 px-1">
+        <button onClick={() => setFilter((f) => ({ ...f, shootingStatus: '' }))} className={pillClass(!filter.shootingStatus)}>
+          スタンス：すべて
+        </button>
+        {COSPLAY_STATUSES.map((s) => (
+          <button key={s} onClick={() => setFilter((f) => ({ ...f, shootingStatus: s }))} className={pillClass(filter.shootingStatus === s)}>
+            {COSPLAY_SHOOTING_STATUS_LABELS[s]}
+          </button>
+        ))}
+      </div>
 
       {filtered.length === 0 ? (
-        <div className="text-center py-10 text-gray-400 text-sm">
+        <div className="text-center py-12 text-gray-400 text-sm bg-white rounded-2xl border border-gray-100">
           {hasActiveFilter ? '条件に一致する参加者がいません' : 'まだ参加表明がありません'}
         </div>
       ) : (
-        <div className="grid gap-3 xl:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2">
           {filtered.map((entry) => (
             <EntryCard key={entry.id} entry={entry} eventId={eventId} />
           ))}

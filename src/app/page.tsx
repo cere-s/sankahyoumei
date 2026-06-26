@@ -15,6 +15,7 @@ export default async function TopPage() {
   const today = todayISO();
   const upcomingAll = events.filter((e) => e.date >= today);
   const upcomingEvents = upcomingAll.slice(0, 3);
+  const totalEntries = Object.values(entryCounts).reduce((a, b) => a + b, 0);
 
   // 参加人数ランキング（開催予定のうち、参加表明が1件以上ある順）
   const ranking = upcomingAll
@@ -26,20 +27,35 @@ export default async function TopPage() {
   return (
     <div>
       {/* Hero */}
-      <section className="bg-gradient-to-br from-violet-50 to-purple-50 px-4 py-12">
+      <section className="relative overflow-hidden bg-gradient-to-br from-violet-100 via-violet-50 to-sky-50 px-4 py-14">
         <div className="max-w-2xl mx-auto text-center">
-          <p className="text-violet-500 text-sm font-medium mb-2">コスプレイベント参加表明サービス</p>
-          <h1 className="text-3xl font-bold text-gray-900 mb-3">コスプレ参加表明</h1>
-          <p className="text-gray-600 text-sm leading-relaxed mb-8">
-            イベントへの参加を表明して、同じイベントに行く人を探しましょう。
+          <span className="inline-block bg-white/70 text-violet-600 text-xs font-medium px-3 py-1 rounded-full mb-4 border border-violet-100">
+            コスプレイベント参加表明サービス
+          </span>
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight mb-4">
+            次のイベント、
+            <br className="sm:hidden" />
+            誰が来るか先に見える。
+          </h1>
+          <p className="text-gray-600 text-sm sm:text-base leading-relaxed mb-7">
+            コスプレ・カメラマンの参加表明を一覧でチェック。
             <br />
-            誰がどのキャラで来るかが一目でわかります。
+            誰がどの作品・キャラで来るかが、当日より前に分かります。
           </p>
-          <div className="flex justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/events"
-              className="bg-violet-600 text-white px-8 py-3 rounded-xl font-bold text-sm hover:bg-violet-700 transition-colors">
+              className="bg-violet-600 text-white px-7 py-3 rounded-xl font-bold text-sm shadow-sm hover:bg-violet-700 active:bg-violet-800 transition-colors">
               イベントを探す
             </Link>
+            <Link href="/events"
+              className="bg-white text-violet-700 border border-violet-200 px-7 py-3 rounded-xl font-bold text-sm hover:bg-violet-50 transition-colors">
+              参加表明する
+            </Link>
+          </div>
+          <div className="flex items-center justify-center gap-5 mt-7 text-xs text-gray-500">
+            <span><span className="font-bold text-gray-800">{upcomingAll.length}</span> 開催予定</span>
+            <span className="w-px h-3 bg-gray-300" />
+            <span><span className="font-bold text-gray-800">{totalEntries}</span> 参加表明</span>
           </div>
         </div>
       </section>
