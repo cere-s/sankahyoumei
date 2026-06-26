@@ -115,8 +115,8 @@ export async function GET(request: NextRequest) {
         <div style={{ display: 'flex', width: '530px', height: '100%', padding: '36px 36px 36px 0' }}>
           {entry.imageUrl ? (
             <div style={{ display: 'flex', width: '100%', height: '100%', borderRadius: 28, overflow: 'hidden', background: '#f3f4f6' }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={entry.imageUrl} width={494} height={558} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img src={entry.imageUrl} alt="" width={494} height={558} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', borderRadius: 28, background: 'linear-gradient(135deg,#ede9fe,#cffafe)' }}>
