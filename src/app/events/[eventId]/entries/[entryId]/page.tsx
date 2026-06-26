@@ -40,8 +40,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
-    // 検索エンジンには載せない（SNSのOGP取得は可能）
-    robots: { index: false, follow: false },
+    // ※ 検証中: noindex がTwitterカードに影響するか切り分けるため一時的に外している
     openGraph: {
       title,
       description,
