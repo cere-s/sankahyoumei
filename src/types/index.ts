@@ -87,6 +87,7 @@ export interface ParticipationEntry {
   cosplayInfo?: CosplayInfo;
   photographerInfo?: PhotographerInfo;
   createdAt: string;
+  updatedAt?: string;
 }
 
 /** 参加表明作成APIのレスポンス */

@@ -12,7 +12,8 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: '*',
-      allow: '/',
+      // OGP画像APIはSNSクローラに読ませる
+      allow: ['/', '/api/og/'],
       // 個人ページ・認証・APIはインデックスさせない（プライバシー配慮）
       disallow: ['/api/', '/auth/', '/mypage', '/participants/', '/events/*/entries/'],
     },

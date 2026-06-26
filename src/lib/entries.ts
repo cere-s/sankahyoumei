@@ -75,6 +75,7 @@ function dbToEntry(row: DBEntry): ParticipationEntry {
     xUsernameSnapshot: row.x_username_snapshot ?? undefined,
     authStatus: (row.auth_status as ParticipationEntry['authStatus']) ?? 'unverified',
     createdAt: row.created_at,
+    updatedAt: row.updated_at ?? undefined,
   };
 
   if (row.participation_type === 'cosplay') {

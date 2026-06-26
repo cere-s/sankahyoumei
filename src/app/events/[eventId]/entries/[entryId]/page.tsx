@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getEventById } from '@/lib/events';
@@ -23,6 +24,35 @@ export const dynamic = 'force-dynamic';
 
 interface Props {
   params: Promise<{ eventId: string; entryId: string }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { eventId, entryId } = await params;
+  const [event, entry] = await Promise.all([getEventById(eventId), getEntryById(entryId)]);
+  if (!entry) return {};
+
+  const title = `${event?.name ?? 'コスプレイベント'}に参加表明しました`;
+  const description = `${entry.displayName}さんの参加表明`;
+  // 編集時に古いOGP画像が残らないよう updatedAt をバージョンに付与
+  const v = entry.updatedAt ? Date.parse(entry.updatedAt) : '';
+  const ogImage = `/api/og/participation?id=${entry.id}&v=${v}`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'article',
+      images: [{ url: ogImage, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogImage],
+    },
+  };
 }
 
 export default async function EntryDetailPage({ params }: Props) {

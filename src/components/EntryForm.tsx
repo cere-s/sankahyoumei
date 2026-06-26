@@ -76,13 +76,17 @@ const inputClass =
   'w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent bg-white';
 
 function SuccessView({
-  eventId, entryId, editToken,
+  eventId, eventName, entryId, editToken,
 }: {
-  eventId: string; entryId: string; editToken: string;
+  eventId: string; eventName: string; entryId: string; editToken: string;
 }) {
   const [copied, setCopied] = useState(false);
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const editUrl = `${origin}/events/${eventId}/entries/${entryId}/edit?token=${editToken}`;
+  const shareUrl = `${origin}/events/${eventId}/entries/${entryId}`;
+  const intentUrl =
+    `https://twitter.com/intent/tweet?text=${encodeURIComponent(`「${eventName}」に参加表明しました！`)}` +
+    `&url=${encodeURIComponent(shareUrl)}`;
 
   async function copyEditUrl() {
     await navigator.clipboard.writeText(editUrl);
@@ -97,6 +101,20 @@ function SuccessView({
         <h2 className="text-lg font-bold text-gray-900">参加表明しました！</h2>
         <p className="text-sm text-gray-500 mt-1">参加者一覧に表示されます</p>
       </div>
+
+      {/* Xで共有（Web Intent。自動投稿はしない） */}
+      <a
+        href={intentUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center justify-center gap-2 w-full bg-black text-white rounded-xl py-3 font-bold text-sm hover:bg-gray-800 transition-colors"
+      >
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+        </svg>
+        Xで投稿する
+      </a>
+      <p className="-mt-3 text-center text-xs text-gray-400">投稿画面が開きます。OGPカード付きで共有できます。</p>
 
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-3">
         <p className="text-sm font-bold text-amber-900">⚠️ 編集URLを保存してください</p>
@@ -172,6 +190,7 @@ export function EntryForm({ eventId, eventName, defaultDate, suggestions = EMPTY
     return (
       <SuccessView
         eventId={eventId}
+        eventName={eventName}
         entryId={createdData.entryId}
         editToken={createdData.editToken}
       />
