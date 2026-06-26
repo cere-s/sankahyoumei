@@ -8,20 +8,29 @@ import {
   COSPLAY_SHOOTING_STATUS_LABELS,
 } from '@/lib/utils';
 
-export const dynamic = 'force-dynamic';
-
 const W = 1200;
 const H = 630;
 const OLD_UA =
   'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0 Safari/537.36';
 
+// 生成画像をCDNに強くキャッシュさせる（URLの v={updatedAt} で更新時に自動バスト）
+const IMAGE_HEADERS = { 'cache-control': 'public, max-age=86400, s-maxage=604800, immutable' };
+
+// ウォームインスタンスでのフォント再取得を避ける簡易キャッシュ
+const fontCache = new Map<string, ArrayBuffer>();
+
 /** 表示テキストだけを含むサブセットの Noto Sans JP（WOFF）を取得 */
 async function loadJpFont(text: string): Promise<ArrayBuffer> {
+  const cached = fontCache.get(text);
+  if (cached) return cached;
   const url = `https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@700&text=${encodeURIComponent(text)}`;
   const css = await fetch(url, { headers: { 'User-Agent': OLD_UA } }).then((r) => r.text());
   const m = css.match(/src:\s*url\((https:\/\/[^)]+)\)/);
   if (!m) throw new Error('font url not found');
-  return fetch(m[1]).then((r) => r.arrayBuffer());
+  const data = await fetch(m[1]).then((r) => r.arrayBuffer());
+  if (fontCache.size > 50) fontCache.clear();
+  fontCache.set(text, data);
+  return data;
 }
 
 const TYPE_TAG: Record<string, { bg: string; fg: string }> = {
@@ -54,7 +63,7 @@ export async function GET(request: NextRequest) {
           <div style={{ display: 'flex', fontSize: 28, marginTop: 16, opacity: 0.92 }}>イベント前に、誰が来るか見える。</div>
         </div>
       ),
-      { width: W, height: H, fonts: [{ name: 'NotoSansJP', data: font, weight: 700, style: 'normal' }] }
+      { width: W, height: H, fonts: [{ name: 'NotoSansJP', data: font, weight: 700, style: 'normal' }], headers: IMAGE_HEADERS }
     );
   }
 
@@ -131,7 +140,7 @@ export async function GET(request: NextRequest) {
       width: W,
       height: H,
       fonts: [{ name: 'NotoSansJP', data: font, weight: 700, style: 'normal' }],
-      headers: { 'cache-control': 'public, max-age=3600, s-maxage=86400' },
+      headers: IMAGE_HEADERS,
     }
   );
 }
