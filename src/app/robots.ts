@@ -14,8 +14,10 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: '*',
       // OGP画像APIはSNSクローラに読ませる
       allow: ['/', '/api/og/'],
-      // 個人ページ・認証・APIはインデックスさせない（プライバシー配慮）
-      disallow: ['/api/', '/auth/', '/mypage', '/participants/', '/events/*/entries/'],
+      // 認証・管理・APIは取得不可に。
+      // 参加表明/参加者ページは SNS の OGP 取得を許可するため robots では禁止せず、
+      // ページ側の noindex メタで検索インデックスのみ抑止する。
+      disallow: ['/api/', '/auth/', '/mypage'],
     },
     sitemap: `${base}/sitemap.xml`,
   };

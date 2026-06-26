@@ -40,6 +40,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
+    // 検索エンジンには載せない（SNSのOGP取得は可能）
+    robots: { index: false, follow: false },
     openGraph: {
       title,
       description,

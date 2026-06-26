@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getEntriesByXId } from '@/lib/entries';
@@ -11,6 +12,9 @@ import {
 } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
+
+// 検索インデックスには載せない（個人ページ）
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 interface Props {
   params: Promise<{ xId: string }>;
