@@ -13,6 +13,7 @@ import type {
   PhotographerInfo,
 } from '@/types';
 import type { CosplaySuggestions } from '@/lib/entries';
+import { ImageUpload } from './ImageUpload';
 import {
   PARTICIPATION_TYPE_LABELS,
   COSPLAY_SHOOTING_STATUS_LABELS,
@@ -96,6 +97,11 @@ function SuccessView({
         <div className="text-4xl mb-3">✅</div>
         <h2 className="text-lg font-bold text-gray-900">参加表明しました！</h2>
         <p className="text-sm text-gray-500 mt-1">参加者一覧に表示されます</p>
+      </div>
+
+      {/* 作成直後に画像を追加できる */}
+      <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+        <ImageUpload entryId={entryId} />
       </div>
 
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-3">
@@ -403,8 +409,7 @@ export function EntryForm({ eventId, eventName, defaultDate, suggestions = EMPTY
         </Field>
         <Field label="参加表明画像（任意）">
           <p className="text-xs text-gray-400 leading-relaxed">
-            画像は<span className="font-medium">作成後</span>に追加できます（推奨比率 16:9 / 1200×675px）。
-            作成完了後の編集画面からアップロードしてください。
+            画像は<span className="font-medium">参加表明した直後の画面</span>でアップロードできます（推奨比率 16:9 / 1200×675px）。あとから編集画面でも変更できます。
           </p>
         </Field>
         <Field label="ツイートURL（任意）">
