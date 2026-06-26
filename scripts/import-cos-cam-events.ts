@@ -25,9 +25,14 @@ const DETAIL_FETCH_DELAY_MS = 1200;
 
 /** 取得対象の地方一覧（cos-cam.work の地方別ページ） */
 const REGIONS: { region: string; url: string }[] = [
+  { region: '北海道', url: 'https://cos-cam.work/?page_id=291' },
+  { region: '東北', url: 'https://cos-cam.work/?page_id=293' },
   { region: '関東', url: 'https://cos-cam.work/?page_id=154' },
   { region: '東海', url: 'https://cos-cam.work/?page_id=93' },
   { region: '関西', url: 'https://cos-cam.work/?page_id=88' },
+  { region: '中国四国', url: 'https://cos-cam.work/?page_id=91' },
+  { region: '九州', url: 'https://cos-cam.work/?page_id=295' },
+  { region: '沖縄', url: 'https://cos-cam.work/?page_id=297' },
 ];
 
 const isDryRun = process.argv.includes('--dry-run');
