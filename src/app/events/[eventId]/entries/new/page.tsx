@@ -53,6 +53,7 @@ export default async function NewEntryPage({ params }: Props) {
         <EntryForm
           eventId={event.id}
           eventName={event.name}
+          eventHashtag={event.hashtag}
           defaultDate={event.date}
           suggestions={suggestions}
           profile={auth.profile}

@@ -32,6 +32,8 @@ interface Props {
   eventId: string;
   eventName: string;
   defaultDate: string;
+  /** イベントのハッシュタグ（#なし）。X投稿に付与する */
+  eventHashtag?: string;
   suggestions?: CosplaySuggestions;
   /** Xログイン済みプロフィール（X IDは手入力させず、ここから自動設定する） */
   profile: Profile;
@@ -76,17 +78,19 @@ const inputClass =
   'w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent bg-white';
 
 function SuccessView({
-  eventId, eventName, entryId, editToken,
+  eventId, eventName, eventHashtag, entryId, editToken,
 }: {
-  eventId: string; eventName: string; entryId: string; editToken: string;
+  eventId: string; eventName: string; eventHashtag?: string; entryId: string; editToken: string;
 }) {
   const [copied, setCopied] = useState(false);
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const editUrl = `${origin}/events/${eventId}/entries/${entryId}/edit?token=${editToken}`;
   const shareUrl = `${origin}/events/${eventId}/entries/${entryId}`;
+  const tag = eventHashtag?.replace(/^#/, '').trim();
   const intentUrl =
     `https://twitter.com/intent/tweet?text=${encodeURIComponent(`「${eventName}」に参加表明しました！`)}` +
-    `&url=${encodeURIComponent(shareUrl)}`;
+    `&url=${encodeURIComponent(shareUrl)}` +
+    (tag ? `&hashtags=${encodeURIComponent(tag)}` : '');
 
   async function copyEditUrl() {
     await navigator.clipboard.writeText(editUrl);
@@ -149,7 +153,7 @@ function SuccessView({
   );
 }
 
-export function EntryForm({ eventId, eventName, defaultDate, suggestions = EMPTY_SUGGESTIONS, profile, defaults }: Props) {
+export function EntryForm({ eventId, eventName, eventHashtag, defaultDate, suggestions = EMPTY_SUGGESTIONS, profile, defaults }: Props) {
   const [formState, setFormState] = useState<FormState>('input');
   const [createdData, setCreatedData] = useState<{ entryId: string; editToken: string } | null>(null);
 
@@ -191,6 +195,7 @@ export function EntryForm({ eventId, eventName, defaultDate, suggestions = EMPTY
       <SuccessView
         eventId={eventId}
         eventName={eventName}
+        eventHashtag={eventHashtag}
         entryId={createdData.entryId}
         editToken={createdData.editToken}
       />
