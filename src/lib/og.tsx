@@ -104,14 +104,17 @@ export async function buildOgImageResponse(
           </div>
           <div style={{ display: 'flex', fontSize: 22, color: '#c4b5fd' }}>{SITE_TEXT}</div>
         </div>
-        <div style={{ display: 'flex', width: '530px', height: '100%', padding: '36px 36px 36px 0' }}>
+        <div style={{ display: 'flex', width: '530px', height: '100%' }}>
           {entry.imageUrl ? (
-            <div style={{ display: 'flex', width: '100%', height: '100%', borderRadius: 28, overflow: 'hidden', background: '#f3f4f6' }}>
-              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-              <img src={entry.imageUrl} alt="" width={494} height={558} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            // 16:9 の枠に中央配置。はみ出さないよう object-contain
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', padding: '0 40px', background: 'linear-gradient(135deg,#f5f3ff,#ecfeff)' }}>
+              <div style={{ display: 'flex', width: '450px', height: '253px', borderRadius: 20, overflow: 'hidden', background: '#e5e7eb' }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={entry.imageUrl} alt="" width={450} height={253} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              </div>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', borderRadius: 28, background: 'linear-gradient(135deg,#ede9fe,#cffafe)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', background: 'linear-gradient(135deg,#ede9fe,#cffafe)' }}>
               <div style={{ display: 'flex', fontSize: 44, color: '#7c3aed' }}>参加表明</div>
               <div style={{ display: 'flex', fontSize: 22, color: '#6d28d9', marginTop: 14, padding: '0 24px', textAlign: 'center' }}>イベント前に、誰が来るか見える。</div>
             </div>
