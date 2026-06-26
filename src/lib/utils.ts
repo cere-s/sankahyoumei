@@ -45,6 +45,14 @@ export const PARTICIPATION_TYPE_COLORS: Record<ParticipationType, string> = {
   undecided: 'bg-gray-100 text-gray-600',
 };
 
+/** 参加者カードの種別ごとの色（淡い背景＋色付き枠。文字は濃いまま＝視認性確保） */
+export const PARTICIPATION_TYPE_CARD: Record<ParticipationType, string> = {
+  cosplay: 'bg-pink-50 border-pink-200 group-hover:border-pink-300',
+  photographer: 'bg-blue-50 border-blue-200 group-hover:border-blue-300',
+  general: 'bg-emerald-50 border-emerald-200 group-hover:border-emerald-300',
+  undecided: 'bg-gray-50 border-gray-200 group-hover:border-gray-300',
+};
+
 export const COSPLAY_STATUS_COLORS: Record<CosplayShootingStatus, string> = {
   greeting_welcome: 'bg-emerald-100 text-emerald-800',
   mutual_ok: 'bg-blue-100 text-blue-800',

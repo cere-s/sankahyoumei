@@ -6,6 +6,7 @@ import { AuthStatusBadge } from './AuthStatus';
 import {
   PARTICIPATION_TYPE_LABELS,
   PARTICIPATION_TYPE_COLORS,
+  PARTICIPATION_TYPE_CARD,
   COSPLAY_SHOOTING_STATUS_LABELS,
   COSPLAY_STATUS_COLORS,
   PHOTOGRAPHER_FIRST_MEET_LABELS,
@@ -21,7 +22,7 @@ interface Props {
 export function EntryCard({ entry, eventId, eventName }: Props) {
   return (
     <Link href={`/events/${eventId}/entries/${entry.id}`} className="group block h-full">
-      <div className="h-full flex flex-col overflow-hidden bg-white rounded-2xl border border-gray-100 shadow-sm group-hover:shadow-md group-hover:border-violet-200 transition-all">
+      <div className={`h-full flex flex-col overflow-hidden rounded-2xl border shadow-sm group-hover:shadow-md transition-all ${PARTICIPATION_TYPE_CARD[entry.participationType]}`}>
         {/* 参加表明画像（あるときだけ大きめに。16:9・情報画像のため object-contain） */}
         {entry.imageUrl && (
           <div className="w-full aspect-video bg-gray-100 overflow-hidden flex items-center justify-center">
