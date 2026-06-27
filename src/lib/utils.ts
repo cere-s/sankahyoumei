@@ -71,13 +71,13 @@ export function parseHashtags(raw?: string): string[] {
     .filter(Boolean);
 }
 
-/** ローカルタイムゾーンの今日を YYYY-MM-DD で返す */
+/**
+ * 日本時間(JST)の今日を YYYY-MM-DD で返す。
+ * Vercel のサーバーは UTC で動くため、必ずタイムゾーンを指定する
+ * （指定しないと日本の深夜〜朝に「前日」と判定され、当日のイベントが残る）。
+ */
 export function todayISO(): string {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Tokyo' });
 }
 
 export function formatDate(dateStr: string): string {
