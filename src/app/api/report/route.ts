@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
   try {
     const resend = new Resend(apiKey);
     const { error } = await resend.emails.send({
-      from: `コスプレ参加表明 通報 <${from}>`,
+      from: `コスいく 通報 <${from}>`,
       to,
       subject: `【通報】${reasonLabel} - ${entry.displayName}（@${entry.xId}）`,
       replyTo: reporterContact.includes('@') ? reporterContact : undefined,

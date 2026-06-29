@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: '免責事項 — コスプレ参加表明',
+  title: '免責事項',
   description: '本サービスの利用にあたっての免責事項',
 };
 
@@ -16,7 +16,7 @@ export default function DisclaimerPage() {
         <section>
           <h2 className="font-bold text-gray-900 mb-1.5">1. 利用にあたっての基本方針</h2>
           <p>
-            本サービス「コスプレ参加表明」（以下「本サービス」）は、利用者ご自身の責任においてご利用ください。
+            本サービス「コスいく」（以下「本サービス」）は、利用者ご自身の責任においてご利用ください。
             本サービスの利用または利用できなかったことによって生じたいかなる損害・不利益・トラブルについても、
             運営者は一切の責任を負いません。
           </p>

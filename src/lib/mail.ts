@@ -38,7 +38,7 @@ export async function sendMail(input: SendMailInput): Promise<SendMailResult> {
   try {
     const resend = new Resend(apiKey);
     const { error } = await resend.emails.send({
-      from: `コスプレ参加表明 <${from}>`,
+      from: `コスいく <${from}>`,
       to,
       subject: input.subject,
       replyTo: input.replyTo,

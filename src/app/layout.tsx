@@ -13,12 +13,12 @@ const geist = Geist({
   subsets: ['latin'],
 });
 
-const siteName = DEMO ? 'コスプレ参加表明（デモ版）' : 'コスプレ参加表明';
-const description = 'コスプレイベントへの参加を簡単に表明・検索できるサービス';
+const siteName = DEMO ? 'コスいく（デモ版）' : 'コスいく';
+const description = '好きでつながる、コスプレ参加表明サイト。誰がどの作品・キャラで来るかが一覧でわかります。';
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
-  title: siteName,
+  title: { default: siteName, template: `%s｜コスいく` },
   description,
   // デモ版は検索エンジンに載せない
   robots: DEMO ? { index: false, follow: false } : undefined,
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     description,
     type: 'website',
     locale: 'ja_JP',
-    siteName: 'コスプレ参加表明',
+    siteName: 'コスいく',
   },
   twitter: {
     card: 'summary_large_image',
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ja" className={`${geist.variable} h-full`}>
-      <body className="min-h-full flex flex-col bg-gradient-to-b from-violet-50 via-white to-white antialiased">
+      <body className="min-h-full flex flex-col bg-gradient-to-b from-pink-50 via-white to-white antialiased">
         {DEMO && <DemoBanner />}
         <Header />
         <main className="flex-1">{children}</main>
@@ -64,7 +64,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               お問い合わせ
             </Link>
           </p>
-          <p>コスプレ参加表明 — イベント参加をもっと楽しく</p>
+          <p className="flex items-center justify-center gap-1.5 text-gray-500">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-mark.png" alt="" className="w-4 h-4" />
+            コスいく — 好きでつながる、コスプレ参加表明サイト
+          </p>
         </footer>
         <Analytics />
       </body>

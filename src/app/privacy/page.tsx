@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'プライバシーポリシー — コスプレ参加表明',
+  title: 'プライバシーポリシー',
   description: '本サービスのプライバシーポリシー',
 };
 

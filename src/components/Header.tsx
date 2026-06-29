@@ -9,11 +9,15 @@ export async function Header() {
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-20">
       <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-        <Link href="/" className="font-bold text-violet-600 text-lg leading-tight shrink-0">
-          コスプレ参加表明
+        <Link href="/" className="flex items-center gap-2 shrink-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-mark.png" alt="" className="w-8 h-8" />
+          <span className="font-bold text-lg leading-tight text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-violet-500">
+            コスいく
+          </span>
         </Link>
         <nav className="flex items-center gap-3">
-          <Link href="/events" className="text-sm text-gray-600 hover:text-violet-600 transition-colors">
+          <Link href="/events" className="text-sm text-gray-600 hover:text-pink-500 transition-colors">
             イベント一覧
           </Link>
           {user ? (

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: '利用規約 — コスプレ参加表明',
+  title: '利用規約',
   description: '本サービスの利用規約',
 };
 
@@ -16,7 +16,7 @@ export default function TermsPage() {
         <section>
           <h2 className="font-bold text-gray-900 mb-1.5">1. サービスの位置づけ</h2>
           <p>
-            本サービス「コスプレ参加表明」（以下「本サービス」）は、コスプレイベントへの参加表明の作成・検索を補助する
+            本サービス「コスいく」（以下「本サービス」）は、コスプレイベントへの参加表明の作成・検索を補助する
             <span className="font-medium">非公式サービス</span>です。各イベントの公式運営とは関係ありません。
           </p>
         </section>

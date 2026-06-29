@@ -39,7 +39,7 @@ function clip(s: string, n: number): string {
   return s.length > n ? s.slice(0, n) + '…' : s;
 }
 
-const SERVICE = 'コスプレ参加表明';
+const SERVICE = 'コスいく';
 const SITE_TEXT = 'sankahyoumei.vercel.app';
 
 /** 参加表明のOGP画像（ImageResponse）を生成。entry が無ければテンプレ画像 */

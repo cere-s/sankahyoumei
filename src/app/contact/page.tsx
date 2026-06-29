@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { ContactForm } from '@/components/ContactForm';
 
 export const metadata: Metadata = {
-  title: 'お問い合わせ — コスプレ参加表明',
+  title: 'お問い合わせ',
   description: 'ご要望・ご意見・不具合のお問い合わせフォーム',
 };
 

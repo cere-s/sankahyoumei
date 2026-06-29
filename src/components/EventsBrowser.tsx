@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { Event } from '@/types';
 import { EventCard } from './EventCard';
 
@@ -63,11 +63,14 @@ export function EventsBrowser({ events, hasImported, today, initialQ = '', initi
     return { upcoming, past };
   }, [filtered, today]);
 
-  // 段階表示（一度に全部描画しない）
+  // 段階表示（一度に全部描画しない）。絞り込みが変わったらレンダー時に表示数をリセット
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  useEffect(() => {
+  const filterKey = `${q}|${region}`;
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
+  if (prevFilterKey !== filterKey) {
+    setPrevFilterKey(filterKey);
     setVisibleCount(PAGE_SIZE);
-  }, [q, region]);
+  }
 
   const upcomingShown = sorted.upcoming.slice(0, visibleCount);
   const pastBudget = Math.max(0, visibleCount - sorted.upcoming.length);

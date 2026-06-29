@@ -9,7 +9,7 @@ import { ParticipatingEventsExport, type ExportEvent } from '@/components/Partic
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'マイページ — コスプレ参加表明',
+  title: 'マイページ',
 };
 
 export default async function MyPage() {

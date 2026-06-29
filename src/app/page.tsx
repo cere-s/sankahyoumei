@@ -27,16 +27,19 @@ export default async function TopPage() {
   return (
     <div>
       {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-violet-100 via-violet-50 to-sky-50 px-4 py-14">
+      <section className="relative overflow-hidden bg-gradient-to-br from-pink-100 via-purple-50 to-violet-50 px-4 py-14">
         <div className="max-w-2xl mx-auto text-center">
-          <span className="inline-block bg-white/70 text-violet-600 text-xs font-medium px-3 py-1 rounded-full mb-4 border border-violet-100">
-            コスプレイベント参加表明サービス
-          </span>
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight mb-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-mark.png" alt="コスいく" className="w-20 h-20 mx-auto mb-4 drop-shadow-sm" />
+          <h1 className="text-3xl sm:text-4xl font-bold leading-tight mb-2">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-violet-500">コスいく</span>
+          </h1>
+          <p className="text-pink-600 text-sm font-medium mb-5">★ 好きでつながる、コスプレ参加表明サイト ★</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 leading-snug mb-3">
             次のイベント、
             <br className="sm:hidden" />
             誰が来るか先に見える。
-          </h1>
+          </h2>
           <p className="text-gray-600 text-sm sm:text-base leading-relaxed mb-7">
             コスプレ・カメラマンの参加表明を一覧でチェック。
             <br />
@@ -44,7 +47,7 @@ export default async function TopPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/events"
-              className="bg-violet-600 text-white px-7 py-3 rounded-xl font-bold text-sm shadow-sm hover:bg-violet-700 active:bg-violet-800 transition-colors">
+              className="bg-gradient-to-r from-pink-500 to-violet-500 text-white px-7 py-3 rounded-xl font-bold text-sm shadow-sm hover:opacity-90 active:opacity-100 transition-opacity">
               イベントを探す
             </Link>
             <Link href="/events"
