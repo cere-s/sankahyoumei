@@ -13,8 +13,10 @@ import {
   COSPLAY_SHOOTING_STATUS_LABELS,
   PHOTOGRAPHER_FIRST_MEET_LABELS,
   PHOTOGRAPHER_SHOOTING_STYLE_LABELS,
+  getEntryPlans,
 } from '@/lib/utils';
 import type { CosplaySuggestions } from '@/lib/entries';
+import { CosplayPlansEditor, emptyPlan, type PlanDraft } from './CosplayPlansEditor';
 import { ImageUpload } from './ImageUpload';
 
 interface Props {
@@ -47,12 +49,22 @@ export function EditEntryForm({ entry, event, editToken, suggestions = EMPTY_SUG
   const [participationDate, setParticipationDate] = useState(entry.participationDate);
   const [tweetUrl, setTweetUrl] = useState(entry.tweetUrl ?? '');
 
-  // Cosplay
-  const [workName, setWorkName] = useState(entry.cosplayInfo?.workName ?? '');
-  const [characterName, setCharacterName] = useState(entry.cosplayInfo?.characterName ?? '');
+  // Cosplay（当日の予定キャラ：複数可）
+  const [plans, setPlans] = useState<PlanDraft[]>(
+    getEntryPlans(entry).length
+      ? getEntryPlans(entry).map((p) => ({
+          workTitle: p.workTitle ?? '',
+          characterName: p.characterName ?? '',
+          costumeLabel: p.costumeLabel ?? '',
+          timeSlot: p.timeSlot ?? '',
+          planMemo: p.planMemo ?? '',
+        }))
+      : [emptyPlan()]
+  );
   const [shootingStatus, setShootingStatus] = useState<CosplayShootingStatus>(
     entry.cosplayInfo?.shootingStatus ?? 'greeting_welcome'
   );
+  const [planError, setPlanError] = useState('');
 
   // Photographer
   const [targetWorks, setTargetWorks] = useState(entry.photographerInfo?.targetWorks ?? '');
@@ -70,8 +82,16 @@ export function EditEntryForm({ entry, event, editToken, suggestions = EMPTY_SUG
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const characterOptions =
-    suggestions.charactersByWork[workName.trim()] ?? suggestions.allCharacters;
+  const cleanPlans = () =>
+    plans
+      .map((p) => ({
+        workTitle: p.workTitle.trim(),
+        characterName: p.characterName.trim(),
+        costumeLabel: p.costumeLabel.trim(),
+        timeSlot: p.timeSlot.trim(),
+        planMemo: p.planMemo.trim(),
+      }))
+      .filter((p) => p.workTitle || p.characterName);
 
   function toggleStyle(s: PhotographerShootingStyle) {
     setShootingStyles((prev) =>
@@ -81,6 +101,16 @@ export function EditEntryForm({ entry, event, editToken, suggestions = EMPTY_SUG
 
   async function handleUpdate(e: React.FormEvent) {
     e.preventDefault();
+
+    if (entry.participationType === 'cosplay') {
+      const cleaned = cleanPlans();
+      if (cleaned.length === 0 || cleaned.some((p) => !p.workTitle || !p.characterName)) {
+        setPlanError('各予定の作品名・キャラ名を入力してください');
+        return;
+      }
+      setPlanError('');
+    }
+
     setLoading(true);
     setError('');
 
@@ -92,7 +122,13 @@ export function EditEntryForm({ entry, event, editToken, suggestions = EMPTY_SUG
     };
 
     if (entry.participationType === 'cosplay') {
-      body.cosplayInfo = { workName, characterName, shootingStatus };
+      const cleaned = cleanPlans();
+      body.cosplayPlans = cleaned;
+      body.cosplayInfo = {
+        workName: cleaned[0]?.workTitle ?? '',
+        characterName: cleaned[0]?.characterName ?? '',
+        shootingStatus,
+      };
     }
     if (entry.participationType === 'photographer') {
       body.photographerInfo = { targetWorks, availableHours, firstMeetStatus, portfolioUrl, shootingStyles };
@@ -148,22 +184,13 @@ export function EditEntryForm({ entry, event, editToken, suggestions = EMPTY_SUG
         {entry.participationType === 'cosplay' && (
           <div className="border border-pink-100 rounded-xl p-4 space-y-4 bg-pink-50/30">
             <h3 className="text-sm font-bold text-gray-700">コスプレ情報</h3>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">作品名</label>
-              <input type="text" value={workName} onChange={(e) => setWorkName(e.target.value)}
-                list="work-suggestions" autoComplete="off" className={inputClass} />
-              <datalist id="work-suggestions">
-                {suggestions.works.map((w) => <option key={w} value={w} />)}
-              </datalist>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">キャラ名</label>
-              <input type="text" value={characterName} onChange={(e) => setCharacterName(e.target.value)}
-                list="character-suggestions" autoComplete="off" className={inputClass} />
-              <datalist id="character-suggestions">
-                {characterOptions.map((c) => <option key={c} value={c} />)}
-              </datalist>
-            </div>
+            <CosplayPlansEditor
+              plans={plans}
+              onChange={setPlans}
+              suggestions={suggestions}
+              showErrors={Boolean(planError)}
+            />
+            {planError && <p className="text-xs text-red-500">{planError}</p>}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">撮影・交流スタンス</label>
               <div className="flex flex-col gap-2">

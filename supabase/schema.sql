@@ -43,10 +43,11 @@ CREATE TABLE IF NOT EXISTS participation_entries (
     CHECK (participation_type IN ('cosplay', 'photographer', 'general', 'undecided')),
   participation_day DATE NOT NULL,
 
-  -- コスプレ情報
+  -- コスプレ情報（work_name/character_name は cosplay_plans の1件目との後方互換用）
   work_name       TEXT,
   character_name  TEXT,
   shooting_status TEXT,
+  cosplay_plans   JSONB,   -- 当日の予定キャラ配列 [{workTitle,characterName,costumeLabel,timeSlot,planMemo,imageUrl}]
 
   -- カメラマン情報
   photographer_target_works  TEXT,

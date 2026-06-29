@@ -11,6 +11,7 @@ import {
   COSPLAY_STATUS_COLORS,
   PHOTOGRAPHER_FIRST_MEET_LABELS,
   PHOTOGRAPHER_SHOOTING_STYLE_LABELS,
+  getEntryPlans,
 } from '@/lib/utils';
 
 interface Props {
@@ -20,6 +21,7 @@ interface Props {
 }
 
 export function EntryCard({ entry, eventId, eventName }: Props) {
+  const plans = getEntryPlans(entry);
   return (
     <Link href={`/events/${eventId}/entries/${entry.id}`} className="group block h-full">
       <div className={`h-full flex flex-col overflow-hidden rounded-2xl border shadow-sm group-hover:shadow-md transition-all ${PARTICIPATION_TYPE_CARD[entry.participationType]}`}>
@@ -65,22 +67,54 @@ export function EntryCard({ entry, eventId, eventName }: Props) {
             </span>
           </div>
 
-          {/* コスプレ情報 */}
-          {entry.cosplayInfo && (
+          {/* コスプレ情報（当日の予定キャラ：複数可） */}
+          {entry.participationType === 'cosplay' && plans.length > 0 && (
             <div className="mt-3 pt-3 border-t border-gray-50 space-y-1.5">
-              <div className="flex gap-2 text-sm">
-                <span className="text-gray-400 text-xs w-9 shrink-0 pt-0.5">作品</span>
-                <span className="text-gray-800 line-clamp-1">{entry.cosplayInfo.workName}</span>
-              </div>
-              <div className="flex gap-2 text-sm">
-                <span className="text-gray-400 text-xs w-9 shrink-0 pt-0.5">キャラ</span>
-                <span className="text-gray-800 line-clamp-1">{entry.cosplayInfo.characterName}</span>
-              </div>
-              <span
-                className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium ${COSPLAY_STATUS_COLORS[entry.cosplayInfo.shootingStatus]}`}
-              >
-                {COSPLAY_SHOOTING_STATUS_LABELS[entry.cosplayInfo.shootingStatus]}
-              </span>
+              {plans.length === 1 ? (
+                <>
+                  <div className="flex gap-2 text-sm">
+                    <span className="text-gray-400 text-xs w-9 shrink-0 pt-0.5">作品</span>
+                    <span className="text-gray-800 line-clamp-1">{plans[0].workTitle}</span>
+                  </div>
+                  <div className="flex gap-2 text-sm">
+                    <span className="text-gray-400 text-xs w-9 shrink-0 pt-0.5">キャラ</span>
+                    <span className="text-gray-800 line-clamp-1">{plans[0].characterName}</span>
+                  </div>
+                  {(plans[0].timeSlot || plans[0].costumeLabel) && (
+                    <p className="text-xs text-gray-400 pl-11">
+                      {[plans[0].timeSlot, plans[0].costumeLabel].filter(Boolean).join('｜')}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p className="text-xs font-bold text-gray-500">当日の予定（{plans.length}キャラ）</p>
+                  <ol className="space-y-1.5">
+                    {plans.map((p, i) => (
+                      <li key={i} className="text-sm flex gap-2">
+                        <span className="shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-full bg-pink-100 text-pink-700 text-[11px] font-bold">
+                          {i + 1}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="text-gray-800 line-clamp-1">{p.workTitle} / {p.characterName}</span>
+                          {(p.timeSlot || p.costumeLabel) && (
+                            <span className="block text-xs text-gray-400">
+                              {[p.timeSlot, p.costumeLabel].filter(Boolean).join('｜')}
+                            </span>
+                          )}
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                </>
+              )}
+              {entry.cosplayInfo && (
+                <span
+                  className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium ${COSPLAY_STATUS_COLORS[entry.cosplayInfo.shootingStatus]}`}
+                >
+                  {COSPLAY_SHOOTING_STATUS_LABELS[entry.cosplayInfo.shootingStatus]}
+                </span>
+              )}
             </div>
           )}
 

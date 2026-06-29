@@ -5,6 +5,7 @@ import type {
   PhotographerFirstMeetStatus,
   PhotographerShootingStyle,
   CreateEntryResult,
+  CosplayPlan,
 } from '@/types';
 import { createServerClient, createAdminClient, createAuthServerClient } from './supabase/server';
 import { generateToken, hashToken, verifyToken } from './token';
@@ -27,6 +28,7 @@ interface DBEntry {
   work_name: string | null;
   character_name: string | null;
   shooting_status: string | null;
+  cosplay_plans: unknown;
   photographer_target_works: string | null;
   photographer_available_time: string | null;
   photographer_availability: string | null;
@@ -53,6 +55,49 @@ interface DBEntry {
   is_hidden: boolean;
   created_at: string;
   updated_at: string;
+}
+
+/** cosplay_plans(JSONB) を正規化。空なら単一 work/character を1件目として後方互換 */
+function parsePlans(raw: unknown, workName: string | null, characterName: string | null): CosplayPlan[] {
+  if (Array.isArray(raw)) {
+    const plans = (raw as unknown[])
+      .map((p) => {
+        const o = (p ?? {}) as Record<string, unknown>;
+        return {
+          workTitle: String(o.workTitle ?? '').trim(),
+          characterName: String(o.characterName ?? '').trim(),
+          costumeLabel: o.costumeLabel ? String(o.costumeLabel) : undefined,
+          timeSlot: o.timeSlot ? String(o.timeSlot) : undefined,
+          planMemo: o.planMemo ? String(o.planMemo) : undefined,
+          imageUrl: o.imageUrl ? String(o.imageUrl) : undefined,
+        } as CosplayPlan;
+      })
+      .filter((p) => p.workTitle || p.characterName);
+    if (plans.length) return plans;
+  }
+  if (workName || characterName) {
+    return [{ workTitle: workName ?? '', characterName: characterName ?? '' }];
+  }
+  return [];
+}
+
+/** 保存用に予定配列を整形（trim・空項目除去・空予定の除去）。空なら null */
+function cleanPlansForStorage(plans?: CosplayPlan[]): CosplayPlan[] | null {
+  if (!plans?.length) return null;
+  const cleaned = plans
+    .map((p) => {
+      const o: CosplayPlan = {
+        workTitle: (p.workTitle ?? '').trim(),
+        characterName: (p.characterName ?? '').trim(),
+      };
+      if (p.costumeLabel?.trim()) o.costumeLabel = p.costumeLabel.trim();
+      if (p.timeSlot?.trim()) o.timeSlot = p.timeSlot.trim();
+      if (p.planMemo?.trim()) o.planMemo = p.planMemo.trim();
+      if (p.imageUrl?.trim()) o.imageUrl = p.imageUrl.trim();
+      return o;
+    })
+    .filter((p) => p.workTitle || p.characterName);
+  return cleaned.length ? cleaned : null;
 }
 
 function dbToEntry(row: DBEntry): ParticipationEntry {
@@ -83,9 +128,11 @@ function dbToEntry(row: DBEntry): ParticipationEntry {
   };
 
   if (row.participation_type === 'cosplay') {
+    const plans = parsePlans(row.cosplay_plans, row.work_name, row.character_name);
+    entry.cosplayPlans = plans;
     entry.cosplayInfo = {
-      workName: row.work_name ?? '',
-      characterName: row.character_name ?? '',
+      workName: plans[0]?.workTitle ?? '',
+      characterName: plans[0]?.characterName ?? '',
       shootingStatus: (row.shooting_status ?? 'greeting_welcome') as CosplayShootingStatus,
     };
   }
@@ -157,7 +204,7 @@ export async function getCosplaySuggestions(): Promise<CosplaySuggestions> {
   const supabase = createServerClient();
   const { data, error } = await supabase
     .from('participation_entries')
-    .select('work_name, character_name')
+    .select('work_name, character_name, cosplay_plans')
     .eq('participation_type', 'cosplay')
     .eq('is_hidden', false);
 
@@ -170,14 +217,19 @@ export async function getCosplaySuggestions(): Promise<CosplaySuggestions> {
   const allCharacters = new Set<string>();
   const charSetByWork = new Map<string, Set<string>>();
 
-  for (const row of (data ?? []) as { work_name: string | null; character_name: string | null }[]) {
-    const work = row.work_name?.trim();
-    const char = row.character_name?.trim();
-    if (work) works.add(work);
-    if (char) allCharacters.add(char);
-    if (work && char) {
-      if (!charSetByWork.has(work)) charSetByWork.set(work, new Set());
-      charSetByWork.get(work)!.add(char);
+  type Row = { work_name: string | null; character_name: string | null; cosplay_plans: unknown };
+  for (const row of (data ?? []) as Row[]) {
+    // 予定（複数）を正規化し、各予定の作品・キャラを集計
+    const plans = parsePlans(row.cosplay_plans, row.work_name, row.character_name);
+    for (const p of plans) {
+      const work = p.workTitle?.trim();
+      const char = p.characterName?.trim();
+      if (work) works.add(work);
+      if (char) allCharacters.add(char);
+      if (work && char) {
+        if (!charSetByWork.has(work)) charSetByWork.set(work, new Set());
+        charSetByWork.get(work)!.add(char);
+      }
     }
   }
 
@@ -273,6 +325,7 @@ export interface CreateEntryInput {
   tweetUrl?: string;
   deletePassword?: string;
   cosplayInfo?: ParticipationEntry['cosplayInfo'];
+  cosplayPlans?: CosplayPlan[];
   photographerInfo?: ParticipationEntry['photographerInfo'];
   // Xログイン由来（必須：なりすまし防止のためログイン必須）
   userId: string;
@@ -296,6 +349,7 @@ export async function createEntry(input: CreateEntryInput): Promise<CreateEntryR
       xUsernameSnapshot: input.xUsernameSnapshot,
       authStatus: 'verified_x',
       cosplayInfo: input.cosplayInfo,
+      cosplayPlans: input.cosplayPlans?.length ? input.cosplayPlans : input.cosplayInfo ? [{ workTitle: input.cosplayInfo.workName, characterName: input.cosplayInfo.characterName }] : undefined,
       photographerInfo: input.photographerInfo,
       createdAt: new Date().toISOString(),
     };
@@ -332,10 +386,11 @@ export async function createEntry(input: CreateEntryInput): Promise<CreateEntryR
     auth_status: 'verified_x',
     edit_token_hash: hashToken(editToken),
     delete_password_hash: input.deletePassword ? hashToken(input.deletePassword) : null,
-    // cosplay
-    work_name: input.cosplayInfo?.workName || null,
-    character_name: input.cosplayInfo?.characterName || null,
+    // cosplay（cosplay_plans が本体。work_name/character_name は1件目との後方互換）
+    work_name: cleanPlansForStorage(input.cosplayPlans)?.[0]?.workTitle || input.cosplayInfo?.workName || null,
+    character_name: cleanPlansForStorage(input.cosplayPlans)?.[0]?.characterName || input.cosplayInfo?.characterName || null,
     shooting_status: input.cosplayInfo?.shootingStatus || null,
+    cosplay_plans: cleanPlansForStorage(input.cosplayPlans),
     // photographer
     photographer_target_works: input.photographerInfo?.targetWorks || null,
     photographer_available_time: input.photographerInfo?.availableHours || null,
@@ -366,6 +421,7 @@ export interface UpdateEntryInput {
   /** 空文字なら埋め込み解除、未指定なら変更なし */
   tweetUrl?: string;
   cosplayInfo?: ParticipationEntry['cosplayInfo'];
+  cosplayPlans?: CosplayPlan[];
   photographerInfo?: ParticipationEntry['photographerInfo'];
 }
 
@@ -380,6 +436,7 @@ export async function updateEntry(
       comment: input.comment ?? base.comment,
       participationDate: input.participationDate ?? base.participationDate,
       cosplayInfo: input.cosplayInfo ?? base.cosplayInfo,
+      cosplayPlans: input.cosplayPlans ?? base.cosplayPlans,
       photographerInfo: input.photographerInfo ?? base.photographerInfo,
     };
   }
@@ -418,10 +475,19 @@ export async function updateEntry(
       updateData.is_verified_x = false;
     }
   }
+  if (input.cosplayPlans !== undefined) {
+    const plans = cleanPlansForStorage(input.cosplayPlans);
+    updateData.cosplay_plans = plans;
+    updateData.work_name = plans?.[0]?.workTitle || null;
+    updateData.character_name = plans?.[0]?.characterName || null;
+  }
   if (input.cosplayInfo) {
-    updateData.work_name = input.cosplayInfo.workName || null;
-    updateData.character_name = input.cosplayInfo.characterName || null;
     updateData.shooting_status = input.cosplayInfo.shootingStatus || null;
+    // 後方互換: plans未指定で旧形式のみ来た場合
+    if (input.cosplayPlans === undefined) {
+      updateData.work_name = input.cosplayInfo.workName || null;
+      updateData.character_name = input.cosplayInfo.characterName || null;
+    }
   }
   if (input.photographerInfo) {
     updateData.photographer_target_works = input.photographerInfo.targetWorks || null;

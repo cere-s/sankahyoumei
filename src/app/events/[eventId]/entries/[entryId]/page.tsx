@@ -18,6 +18,7 @@ import {
   PHOTOGRAPHER_FIRST_MEET_LABELS,
   PHOTOGRAPHER_SHOOTING_STYLE_LABELS,
   formatDate,
+  getEntryPlans,
 } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
@@ -68,6 +69,7 @@ export default async function EntryDetailPage({ params }: Props) {
   if (!event || !entry) notFound();
 
   const isOwner = Boolean(user && entry.userId && user.id === entry.userId);
+  const cosplayPlans = getEntryPlans(entry);
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
@@ -137,26 +139,66 @@ export default async function EntryDetailPage({ params }: Props) {
             <dd className="text-gray-700">{formatDate(entry.participationDate)}</dd>
           </div>
 
-          {entry.cosplayInfo && (
+          {entry.participationType === 'cosplay' && cosplayPlans.length > 0 && (
             <>
-              <div className="flex gap-2">
-                <dt className="text-gray-400 shrink-0 w-20">作品</dt>
-                <dd className="text-gray-700">{entry.cosplayInfo.workName}</dd>
-              </div>
-              <div className="flex gap-2">
-                <dt className="text-gray-400 shrink-0 w-20">キャラ</dt>
-                <dd className="text-gray-700">{entry.cosplayInfo.characterName}</dd>
-              </div>
-              <div className="flex gap-2">
-                <dt className="text-gray-400 shrink-0 w-20">撮影・交流</dt>
-                <dd>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                    COSPLAY_STATUS_COLORS[entry.cosplayInfo.shootingStatus]
-                  }`}>
-                    {COSPLAY_SHOOTING_STATUS_LABELS[entry.cosplayInfo.shootingStatus]}
-                  </span>
-                </dd>
-              </div>
+              {cosplayPlans.length === 1 ? (
+                <>
+                  <div className="flex gap-2">
+                    <dt className="text-gray-400 shrink-0 w-20">作品</dt>
+                    <dd className="text-gray-700">{cosplayPlans[0].workTitle}</dd>
+                  </div>
+                  <div className="flex gap-2">
+                    <dt className="text-gray-400 shrink-0 w-20">キャラ</dt>
+                    <dd className="text-gray-700">
+                      {cosplayPlans[0].characterName}
+                      {(cosplayPlans[0].timeSlot || cosplayPlans[0].costumeLabel) && (
+                        <span className="block text-xs text-gray-400">
+                          {[cosplayPlans[0].timeSlot, cosplayPlans[0].costumeLabel].filter(Boolean).join('｜')}
+                        </span>
+                      )}
+                      {cosplayPlans[0].planMemo && (
+                        <span className="block text-xs text-gray-400">{cosplayPlans[0].planMemo}</span>
+                      )}
+                    </dd>
+                  </div>
+                </>
+              ) : (
+                <div className="flex gap-2">
+                  <dt className="text-gray-400 shrink-0 w-20">当日の予定</dt>
+                  <dd className="flex-1">
+                    <ol className="space-y-2">
+                      {cosplayPlans.map((p, i) => (
+                        <li key={i} className="flex gap-2">
+                          <span className="shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-full bg-pink-100 text-pink-700 text-[11px] font-bold">
+                            {i + 1}
+                          </span>
+                          <span>
+                            <span className="text-gray-700">{p.workTitle} / {p.characterName}</span>
+                            {(p.timeSlot || p.costumeLabel) && (
+                              <span className="block text-xs text-gray-400">
+                                {[p.timeSlot, p.costumeLabel].filter(Boolean).join('｜')}
+                              </span>
+                            )}
+                            {p.planMemo && <span className="block text-xs text-gray-400">{p.planMemo}</span>}
+                          </span>
+                        </li>
+                      ))}
+                    </ol>
+                  </dd>
+                </div>
+              )}
+              {entry.cosplayInfo && (
+                <div className="flex gap-2">
+                  <dt className="text-gray-400 shrink-0 w-20">撮影・交流</dt>
+                  <dd>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                      COSPLAY_STATUS_COLORS[entry.cosplayInfo.shootingStatus]
+                    }`}>
+                      {COSPLAY_SHOOTING_STATUS_LABELS[entry.cosplayInfo.shootingStatus]}
+                    </span>
+                  </dd>
+                </div>
+              )}
             </>
           )}
 

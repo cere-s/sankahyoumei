@@ -5,6 +5,7 @@ import type {
   PhotographerShootingStyle,
   ParticipationEntry,
   EntryFilter,
+  CosplayPlan,
 } from '@/types';
 
 export const PARTICIPATION_TYPE_LABELS: Record<ParticipationType, string> = {
@@ -90,15 +91,25 @@ export function formatDate(dateStr: string): string {
   });
 }
 
+/** 表示・検索用に予定一覧を取り出す（cosplayPlans 優先、無ければ cosplayInfo を1件目として後方互換） */
+export function getEntryPlans(entry: ParticipationEntry): CosplayPlan[] {
+  if (entry.cosplayPlans?.length) return entry.cosplayPlans;
+  if (entry.cosplayInfo && (entry.cosplayInfo.workName || entry.cosplayInfo.characterName)) {
+    return [{ workTitle: entry.cosplayInfo.workName, characterName: entry.cosplayInfo.characterName }];
+  }
+  return [];
+}
+
 export function filterEntries(entries: ParticipationEntry[], filter: EntryFilter): ParticipationEntry[] {
   return entries.filter((entry) => {
+    const plans = getEntryPlans(entry);
     if (filter.keyword) {
       const kw = filter.keyword.toLowerCase();
       const target = [
         entry.displayName,
         entry.xId,
-        entry.cosplayInfo?.workName ?? '',
-        entry.cosplayInfo?.characterName ?? '',
+        ...plans.map((p) => p.workTitle),
+        ...plans.map((p) => p.characterName),
         entry.comment,
       ]
         .join(' ')
@@ -108,12 +119,12 @@ export function filterEntries(entries: ParticipationEntry[], filter: EntryFilter
     if (filter.participationType && entry.participationType !== filter.participationType) return false;
     if (
       filter.workName &&
-      !entry.cosplayInfo?.workName.toLowerCase().includes(filter.workName.toLowerCase())
+      !plans.some((p) => p.workTitle.toLowerCase().includes(filter.workName.toLowerCase()))
     )
       return false;
     if (
       filter.characterName &&
-      !entry.cosplayInfo?.characterName.toLowerCase().includes(filter.characterName.toLowerCase())
+      !plans.some((p) => p.characterName.toLowerCase().includes(filter.characterName.toLowerCase()))
     )
       return false;
     if (filter.shootingStatus && entry.cosplayInfo?.shootingStatus !== filter.shootingStatus)

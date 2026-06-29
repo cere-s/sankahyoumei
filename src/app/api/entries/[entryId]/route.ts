@@ -55,6 +55,7 @@ export async function PUT(request: NextRequest, { params }: { params: Params }) 
       participationDate: body.participationDate ? String(body.participationDate) : undefined,
       tweetUrl: body.tweetUrl !== undefined ? String(body.tweetUrl) : undefined,
       cosplayInfo: body.cosplayInfo as Parameters<typeof updateEntry>[1]['cosplayInfo'],
+      cosplayPlans: body.cosplayPlans as Parameters<typeof updateEntry>[1]['cosplayPlans'],
       photographerInfo: body.photographerInfo as Parameters<typeof updateEntry>[1]['photographerInfo'],
     });
     await refreshOgImage(entryId);

@@ -87,6 +87,7 @@ export async function POST(request: NextRequest) {
       tweetUrl: body.tweetUrl ? String(body.tweetUrl).trim() : undefined,
       deletePassword: body.deletePassword ? String(body.deletePassword) : undefined,
       cosplayInfo: body.cosplayInfo as ParticipationEntry['cosplayInfo'] | undefined,
+      cosplayPlans: body.cosplayPlans as ParticipationEntry['cosplayPlans'] | undefined,
       photographerInfo: body.photographerInfo as ParticipationEntry['photographerInfo'] | undefined,
       userId: user.id,
       xUserId: profile?.xUserId,

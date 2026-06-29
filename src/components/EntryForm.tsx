@@ -10,9 +10,11 @@ import type {
   CreateEntryResult,
   Profile,
   CosplayInfo,
+  CosplayPlan,
   PhotographerInfo,
 } from '@/types';
 import type { CosplaySuggestions } from '@/lib/entries';
+import { CosplayPlansEditor, emptyPlan, type PlanDraft } from '@/components/CosplayPlansEditor';
 import {
   PARTICIPATION_TYPE_LABELS,
   COSPLAY_SHOOTING_STATUS_LABELS,
@@ -26,6 +28,7 @@ export interface EntryDefaults {
   displayName?: string;
   participationType?: ParticipationType;
   cosplayInfo?: CosplayInfo;
+  cosplayPlans?: CosplayPlan[];
   photographerInfo?: PhotographerInfo;
 }
 
@@ -175,9 +178,18 @@ export function EntryForm({ eventId, eventName, eventHashtag, defaultDate, sugge
   const [imageError, setImageError] = useState('');
   const imageInputRef = useRef<HTMLInputElement>(null);
 
-  // Cosplay
-  const [workName, setWorkName] = useState(defaults?.cosplayInfo?.workName ?? '');
-  const [characterName, setCharacterName] = useState(defaults?.cosplayInfo?.characterName ?? '');
+  // Cosplay（当日の予定キャラ：複数可）
+  const [plans, setPlans] = useState<PlanDraft[]>(
+    defaults?.cosplayPlans?.length
+      ? defaults.cosplayPlans.map((p) => ({
+          workTitle: p.workTitle ?? '',
+          characterName: p.characterName ?? '',
+          costumeLabel: p.costumeLabel ?? '',
+          timeSlot: p.timeSlot ?? '',
+          planMemo: p.planMemo ?? '',
+        }))
+      : [emptyPlan()]
+  );
   const [shootingStatus, setShootingStatus] = useState<CosplayShootingStatus>(defaults?.cosplayInfo?.shootingStatus ?? 'greeting_welcome');
 
   // Photographer
@@ -202,10 +214,6 @@ export function EntryForm({ eventId, eventName, eventHashtag, defaultDate, sugge
       />
     );
   }
-
-  // 選択中の作品に紐づくキャラ名を優先表示。未一致なら全候補をフォールバック
-  const characterOptions =
-    suggestions.charactersByWork[workName.trim()] ?? suggestions.allCharacters;
 
   function toggleStyle(style: PhotographerShootingStyle) {
     setShootingStyles((prev) =>
@@ -238,13 +246,26 @@ export function EntryForm({ eventId, eventName, eventHashtag, defaultDate, sugge
     if (imageInputRef.current) imageInputRef.current.value = '';
   }
 
+  const cleanPlans = () =>
+    plans
+      .map((p) => ({
+        workTitle: p.workTitle.trim(),
+        characterName: p.characterName.trim(),
+        costumeLabel: p.costumeLabel.trim(),
+        timeSlot: p.timeSlot.trim(),
+        planMemo: p.planMemo.trim(),
+      }))
+      .filter((p) => p.workTitle || p.characterName);
+
   function validate(): boolean {
     const e: FormErrors = {};
     if (!displayName.trim()) e.displayName = '表示名を入力してください';
     if (!participationDate) e.participationDate = '参加日を入力してください';
     if (participationType === 'cosplay') {
-      if (!workName.trim()) e.workName = '作品名を入力してください';
-      if (!characterName.trim()) e.characterName = 'キャラ名を入力してください';
+      const cleaned = cleanPlans();
+      if (cleaned.length === 0) e.plans = '作品・キャラを1件以上入力してください';
+      else if (cleaned.some((p) => !p.workTitle || !p.characterName))
+        e.plans = '各予定の作品名・キャラ名を入力してください';
     }
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -270,9 +291,11 @@ export function EntryForm({ eventId, eventName, eventHashtag, defaultDate, sugge
       };
 
       if (participationType === 'cosplay') {
+        const cleaned = cleanPlans();
+        body.cosplayPlans = cleaned;
         body.cosplayInfo = {
-          workName: workName.trim(),
-          characterName: characterName.trim(),
+          workName: cleaned[0]?.workTitle ?? '',
+          characterName: cleaned[0]?.characterName ?? '',
           shootingStatus,
         };
       }
@@ -375,22 +398,13 @@ export function EntryForm({ eventId, eventName, eventHashtag, defaultDate, sugge
       {participationType === 'cosplay' && (
         <div className="border border-pink-100 rounded-xl p-4 space-y-4 bg-pink-50/30">
           <h3 className="text-sm font-bold text-gray-700">コスプレ情報</h3>
-          <Field label="作品名" required error={errors.workName}>
-            <input type="text" value={workName} onChange={(e) => setWorkName(e.target.value)}
-              list="work-suggestions" autoComplete="off" maxLength={100}
-              placeholder="例：Re:ゼロから始める異世界生活" className={inputClass} />
-            <datalist id="work-suggestions">
-              {suggestions.works.map((w) => <option key={w} value={w} />)}
-            </datalist>
-          </Field>
-          <Field label="キャラ名" required error={errors.characterName}>
-            <input type="text" value={characterName} onChange={(e) => setCharacterName(e.target.value)}
-              list="character-suggestions" autoComplete="off" maxLength={100}
-              placeholder="例：レム" className={inputClass} />
-            <datalist id="character-suggestions">
-              {characterOptions.map((c) => <option key={c} value={c} />)}
-            </datalist>
-          </Field>
+          <CosplayPlansEditor
+            plans={plans}
+            onChange={setPlans}
+            suggestions={suggestions}
+            showErrors={Boolean(errors.plans)}
+          />
+          {errors.plans && <p className="text-xs text-red-500">{errors.plans}</p>}
           <Field label="撮影・交流スタンス" required>
             <div className="flex flex-col gap-2">
               {COSPLAY_SHOOTING_STATUSES.map((s) => (

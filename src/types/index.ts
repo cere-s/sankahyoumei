@@ -44,6 +44,18 @@ export interface CosplayInfo {
   shootingStatus: CosplayShootingStatus;
 }
 
+/** 当日の予定キャラ（1イベントに複数登録できる） */
+export interface CosplayPlan {
+  workTitle: string;
+  characterName: string;
+  /** 衣装ラベル（例: 通常衣装 / 私服 など） */
+  costumeLabel?: string;
+  /** 時間帯（例: 昼〜夕方 / 夜 など） */
+  timeSlot?: string;
+  planMemo?: string;
+  imageUrl?: string;
+}
+
 export interface PhotographerInfo {
   targetWorks: string;
   availableHours: string;
@@ -86,7 +98,10 @@ export interface ParticipationEntry {
   xUserId?: string;
   xUsernameSnapshot?: string;
   authStatus: AuthStatus;
+  /** 後方互換: 1件目の予定 + 撮影スタンス */
   cosplayInfo?: CosplayInfo;
+  /** 当日の予定キャラ（複数可） */
+  cosplayPlans?: CosplayPlan[];
   photographerInfo?: PhotographerInfo;
   createdAt: string;
   updatedAt?: string;
