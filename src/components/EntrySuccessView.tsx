@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { parseHashtags } from '@/lib/utils';
+import { tweetHashtags } from '@/lib/utils';
 
 interface Props {
   eventId: string;
@@ -17,11 +17,11 @@ export function EntrySuccessView({ eventId, eventName, eventHashtag, entryId, ed
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const editUrl = `${origin}/events/${eventId}/entries/${entryId}/edit?token=${editToken}`;
   const shareUrl = `${origin}/events/${eventId}/entries/${entryId}`;
-  const tags = parseHashtags(eventHashtag);
+  const tags = tweetHashtags(eventHashtag);
   const intentUrl =
     `https://twitter.com/intent/tweet?text=${encodeURIComponent(`「${eventName}」に参加表明しました！`)}` +
     `&url=${encodeURIComponent(shareUrl)}` +
-    (tags.length ? `&hashtags=${encodeURIComponent(tags.join(','))}` : '');
+    `&hashtags=${encodeURIComponent(tags.join(','))}`;
 
   async function copyEditUrl() {
     await navigator.clipboard.writeText(editUrl);

@@ -7,7 +7,7 @@ import {
   COSPLAY_SHOOTING_STATUS_LABELS,
   PHOTOGRAPHER_FIRST_MEET_LABELS,
   formatDate,
-  parseHashtags,
+  tweetHashtags,
 } from '@/lib/utils';
 
 interface Props {
@@ -16,9 +16,9 @@ interface Props {
 }
 
 function buildShareText(entry: ParticipationEntry, event: Event, origin: string): string {
-  const tags = parseHashtags(event.hashtag);
+  const tags = tweetHashtags(event.hashtag);
   const lines: string[] = [
-    tags.length ? `${tags.map((t) => `#${t}`).join(' ')} 参加表明` : `${event.name} 参加表明`,
+    `${tags.map((t) => `#${t}`).join(' ')} 参加表明`,
     '',
     `参加日：${formatDate(entry.participationDate)}`,
     `参加種別：${PARTICIPATION_TYPE_LABELS[entry.participationType]}`,

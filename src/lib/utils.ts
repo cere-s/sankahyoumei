@@ -113,6 +113,15 @@ export function parseHashtags(raw?: string): string[] {
     .filter(Boolean);
 }
 
+/** サービス共通ハッシュタグ（参加表明ツイートに必ず付与する） */
+export const SERVICE_HASHTAG = 'コスいく';
+
+/** イベントのハッシュタグ（#なし配列）に、必ず #コスいく を含めて返す（重複は除去） */
+export function tweetHashtags(eventHashtag?: string): string[] {
+  const tags = parseHashtags(eventHashtag);
+  return tags.includes(SERVICE_HASHTAG) ? tags : [...tags, SERVICE_HASHTAG];
+}
+
 /**
  * 日本時間(JST)の今日を YYYY-MM-DD で返す。
  * Vercel のサーバーは UTC で動くため、必ずタイムゾーンを指定する
