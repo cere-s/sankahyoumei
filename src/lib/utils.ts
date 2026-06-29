@@ -100,6 +100,64 @@ export function getEntryPlans(entry: ParticipationEntry): CosplayPlan[] {
   return [];
 }
 
+/** 挨拶歓迎（コスプレ・挨拶歓迎スタンス） */
+export function isGreetingWelcome(e: ParticipationEntry): boolean {
+  return e.participationType === 'cosplay' && e.cosplayInfo?.shootingStatus === 'greeting_welcome';
+}
+
+const COSPLAY_SHOOTING_OK: CosplayShootingStatus[] = ['greeting_welcome', 'mutual_ok', 'after_meeting_ok', 'planned'];
+const PHOTO_SHOOTING_OK: PhotographerFirstMeetStatus[] = ['ok', 'negotiable', 'mutual_only'];
+
+/** 撮影相談OK（撮影が歓迎・相談可能なコスプレイヤー / カメラマン） */
+export function isShootingConsultOk(e: ParticipationEntry): boolean {
+  if (e.participationType === 'cosplay')
+    return Boolean(e.cosplayInfo && COSPLAY_SHOOTING_OK.includes(e.cosplayInfo.shootingStatus));
+  if (e.participationType === 'photographer')
+    return Boolean(e.photographerInfo && PHOTO_SHOOTING_OK.includes(e.photographerInfo.firstMeetStatus));
+  return false;
+}
+
+export interface EventStats {
+  total: number;
+  cosplay: number;
+  photographer: number;
+  shootingOk: number;
+  greeting: number;
+}
+
+export function computeEventStats(entries: ParticipationEntry[]): EventStats {
+  return {
+    total: entries.length,
+    cosplay: entries.filter((e) => e.participationType === 'cosplay').length,
+    photographer: entries.filter((e) => e.participationType === 'photographer').length,
+    shootingOk: entries.filter(isShootingConsultOk).length,
+    greeting: entries.filter(isGreetingWelcome).length,
+  };
+}
+
+export interface TagCount {
+  name: string;
+  count: number;
+}
+
+/** 人気作品・人気キャラを「人数（同一人物は1）」で集計し降順に */
+export function computePopularTags(entries: ParticipationEntry[]): { works: TagCount[]; characters: TagCount[] } {
+  const workPeople = new Map<string, number>();
+  const charPeople = new Map<string, number>();
+  for (const e of entries) {
+    const plans = getEntryPlans(e);
+    const works = new Set(plans.map((p) => p.workTitle.trim()).filter(Boolean));
+    const chars = new Set(plans.map((p) => p.characterName.trim()).filter(Boolean));
+    for (const w of works) workPeople.set(w, (workPeople.get(w) ?? 0) + 1);
+    for (const c of chars) charPeople.set(c, (charPeople.get(c) ?? 0) + 1);
+  }
+  const sort = (m: Map<string, number>): TagCount[] =>
+    [...m.entries()]
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ja'));
+  return { works: sort(workPeople), characters: sort(charPeople) };
+}
+
 export function filterEntries(entries: ParticipationEntry[], filter: EntryFilter): ParticipationEntry[] {
   return entries.filter((entry) => {
     const plans = getEntryPlans(entry);

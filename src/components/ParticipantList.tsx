@@ -1,62 +1,168 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import type { ParticipationEntry, ParticipationType, CosplayShootingStatus, EntryFilter } from '@/types';
+import type { ParticipationEntry } from '@/types';
 import { EntryCard } from './EntryCard';
-import { filterEntries, PARTICIPATION_TYPE_LABELS, COSPLAY_SHOOTING_STATUS_LABELS } from '@/lib/utils';
+import {
+  getEntryPlans,
+  computeEventStats,
+  computePopularTags,
+  isShootingConsultOk,
+  isGreetingWelcome,
+} from '@/lib/utils';
 
 interface Props {
   entries: ParticipationEntry[];
   eventId: string;
 }
 
-const EMPTY_FILTER: EntryFilter = {
-  keyword: '',
-  participationType: '',
-  workName: '',
-  characterName: '',
-  shootingStatus: '',
-};
+type Quick = 'all' | 'cosplay' | 'photographer' | 'shooting_ok' | 'greeting';
+type ActiveTag = { type: 'work' | 'char'; value: string } | null;
 
-const PARTICIPATION_TYPES: ParticipationType[] = ['cosplay', 'photographer', 'general', 'undecided'];
-const COSPLAY_STATUSES: CosplayShootingStatus[] = [
-  'greeting_welcome',
-  'mutual_ok',
-  'acquaintance_only',
-  'after_meeting_ok',
-  'planned',
-  'no_shooting',
+const QUICKS: { key: Quick; label: string }[] = [
+  { key: 'all', label: '全員' },
+  { key: 'cosplay', label: 'コスプレ' },
+  { key: 'photographer', label: 'カメラマン' },
+  { key: 'shooting_ok', label: '撮影相談OK' },
+  { key: 'greeting', label: '挨拶歓迎' },
 ];
 
-const pillClass = (selected: boolean) =>
-  `text-xs px-3 py-1.5 rounded-full border font-medium whitespace-nowrap transition-colors ${
-    selected
-      ? 'bg-violet-600 text-white border-violet-600'
-      : 'bg-white text-gray-600 border-gray-200 hover:border-violet-400'
-  }`;
+const MAX_TAGS = 12;
+
+function StatCell({ value, label, color }: { value: number; label: string; color: string }) {
+  return (
+    <div className="text-center">
+      <div className={`text-xl font-bold leading-none ${color}`}>{value}</div>
+      <div className="text-[11px] text-gray-500 mt-1 leading-tight">{label}</div>
+    </div>
+  );
+}
 
 export function ParticipantList({ entries, eventId }: Props) {
-  const [filter, setFilter] = useState<EntryFilter>(EMPTY_FILTER);
+  const [quick, setQuick] = useState<Quick>('all');
+  const [keyword, setKeyword] = useState('');
+  const [activeTag, setActiveTag] = useState<ActiveTag>(null);
 
-  const filtered = useMemo(() => filterEntries(entries, filter), [entries, filter]);
+  const stats = useMemo(() => computeEventStats(entries), [entries]);
+  const tags = useMemo(() => computePopularTags(entries), [entries]);
 
-  const hasActiveFilter = Boolean(filter.keyword || filter.participationType || filter.shootingStatus);
+  const filtered = useMemo(() => {
+    const kw = keyword.trim().toLowerCase();
+    return entries.filter((e) => {
+      const plans = getEntryPlans(e);
+      if (kw) {
+        const hay = [
+          e.displayName,
+          e.xId,
+          e.comment,
+          e.photographerInfo?.targetWorks ?? '',
+          ...plans.map((p) => p.workTitle),
+          ...plans.map((p) => p.characterName),
+        ]
+          .join(' ')
+          .toLowerCase();
+        if (!hay.includes(kw)) return false;
+      }
+      if (quick === 'cosplay' && e.participationType !== 'cosplay') return false;
+      if (quick === 'photographer' && e.participationType !== 'photographer') return false;
+      if (quick === 'shooting_ok' && !isShootingConsultOk(e)) return false;
+      if (quick === 'greeting' && !isGreetingWelcome(e)) return false;
+      if (activeTag?.type === 'work' && !plans.some((p) => p.workTitle.trim() === activeTag.value)) return false;
+      if (activeTag?.type === 'char' && !plans.some((p) => p.characterName.trim() === activeTag.value)) return false;
+      return true;
+    });
+  }, [entries, keyword, quick, activeTag]);
+
+  const hasActiveFilter = Boolean(keyword.trim() || quick !== 'all' || activeTag);
+  const reset = () => {
+    setQuick('all');
+    setKeyword('');
+    setActiveTag(null);
+  };
+  const toggleTag = (type: 'work' | 'char', value: string) =>
+    setActiveTag((cur) => (cur && cur.type === type && cur.value === value ? null : { type, value }));
 
   return (
     <section>
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="font-bold text-gray-900 text-lg">
-          参加者一覧
-          <span className="ml-2 text-sm font-normal text-gray-500">
-            {filtered.length}
-            {hasActiveFilter ? `／${entries.length}` : ''}件
-          </span>
-        </h2>
-        {hasActiveFilter && (
-          <button onClick={() => setFilter(EMPTY_FILTER)} className="text-xs text-gray-500 hover:text-violet-600 hover:underline">
-            条件をリセット
+      {/* コンセプトコピー */}
+      <h2 className="text-lg font-bold text-gray-900 leading-snug">イベント前に、会える人と撮れるものを見つけよう</h2>
+      <p className="text-sm text-gray-500 mt-1 mb-3">作品・キャラ・撮影予定から、同じ好きの人を探せます。</p>
+
+      {/* サマリーカード */}
+      <div className="rounded-2xl border border-pink-100 bg-white shadow-sm p-4 mb-4">
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-y-3 gap-x-2">
+          <StatCell value={stats.total} label="参加表明" color="text-gray-900" />
+          <StatCell value={stats.cosplay} label="コスプレ" color="text-pink-600" />
+          <StatCell value={stats.photographer} label="カメラマン" color="text-blue-600" />
+          <StatCell value={stats.shootingOk} label="撮影相談OK" color="text-violet-600" />
+          <StatCell value={stats.greeting} label="挨拶歓迎" color="text-emerald-600" />
+        </div>
+      </div>
+
+      {/* 同じ好きを探す */}
+      {(tags.works.length > 0 || tags.characters.length > 0) && (
+        <div className="mb-4">
+          <h3 className="text-sm font-bold text-gray-700 mb-2">同じ好きを探す</h3>
+          {tags.works.length > 0 && (
+            <div className="mb-2">
+              <p className="text-[11px] text-gray-400 mb-1">作品</p>
+              <div className="flex flex-wrap gap-1.5">
+                {tags.works.slice(0, MAX_TAGS).map((t) => {
+                  const on = activeTag?.type === 'work' && activeTag.value === t.name;
+                  return (
+                    <button
+                      key={t.name}
+                      onClick={() => toggleTag('work', t.name)}
+                      className={`text-xs px-2.5 py-1 rounded-full border font-medium transition-colors ${
+                        on ? 'bg-pink-500 text-white border-pink-500' : 'bg-pink-50 text-pink-700 border-pink-100 hover:border-pink-300'
+                      }`}
+                    >
+                      {t.name} <span className={on ? 'text-white/80' : 'text-pink-400'}>{t.count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          {tags.characters.length > 0 && (
+            <div>
+              <p className="text-[11px] text-gray-400 mb-1">キャラ</p>
+              <div className="flex flex-wrap gap-1.5">
+                {tags.characters.slice(0, MAX_TAGS).map((t) => {
+                  const on = activeTag?.type === 'char' && activeTag.value === t.name;
+                  return (
+                    <button
+                      key={t.name}
+                      onClick={() => toggleTag('char', t.name)}
+                      className={`text-xs px-2.5 py-1 rounded-full border font-medium transition-colors ${
+                        on ? 'bg-violet-500 text-white border-violet-500' : 'bg-violet-50 text-violet-700 border-violet-100 hover:border-violet-300'
+                      }`}
+                    >
+                      {t.name} <span className={on ? 'text-white/80' : 'text-violet-400'}>{t.count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* フィルター */}
+      <div className="flex gap-2 overflow-x-auto pb-1 mb-3 -mx-1 px-1">
+        {QUICKS.map((q) => (
+          <button
+            key={q.key}
+            onClick={() => setQuick(q.key)}
+            className={`text-xs px-3.5 py-1.5 rounded-full border font-bold whitespace-nowrap transition-colors ${
+              quick === q.key
+                ? 'bg-gradient-to-r from-pink-500 to-violet-500 text-white border-transparent'
+                : 'bg-white text-gray-600 border-gray-200 hover:border-violet-300'
+            }`}
+          >
+            {q.label}
           </button>
-        )}
+        ))}
       </div>
 
       {/* 検索 */}
@@ -66,35 +172,23 @@ export function ParticipantList({ entries, eventId }: Props) {
         </svg>
         <input
           type="search"
-          value={filter.keyword}
-          onChange={(e) => setFilter((f) => ({ ...f, keyword: e.target.value }))}
+          value={keyword}
+          onChange={(e) => setKeyword(e.target.value)}
           placeholder="作品・キャラ・名前で検索"
-          className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-400 placeholder:text-gray-400"
+          className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-pink-200 focus:border-pink-400 placeholder:text-gray-400"
         />
       </div>
 
-      {/* 種別ピル */}
-      <div className="flex gap-2 overflow-x-auto pb-1 mb-2 -mx-1 px-1">
-        <button onClick={() => setFilter((f) => ({ ...f, participationType: '' }))} className={pillClass(!filter.participationType)}>
-          すべて
-        </button>
-        {PARTICIPATION_TYPES.map((t) => (
-          <button key={t} onClick={() => setFilter((f) => ({ ...f, participationType: t }))} className={pillClass(filter.participationType === t)}>
-            {PARTICIPATION_TYPE_LABELS[t]}
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-sm text-gray-500">
+          <span className="font-bold text-gray-800">{filtered.length}</span>
+          {hasActiveFilter ? `／${entries.length}` : ''}人
+        </p>
+        {hasActiveFilter && (
+          <button onClick={reset} className="text-xs text-gray-500 hover:text-pink-600 hover:underline">
+            条件をリセット
           </button>
-        ))}
-      </div>
-
-      {/* スタンスピル */}
-      <div className="flex gap-2 overflow-x-auto pb-1 mb-4 -mx-1 px-1">
-        <button onClick={() => setFilter((f) => ({ ...f, shootingStatus: '' }))} className={pillClass(!filter.shootingStatus)}>
-          スタンス：すべて
-        </button>
-        {COSPLAY_STATUSES.map((s) => (
-          <button key={s} onClick={() => setFilter((f) => ({ ...f, shootingStatus: s }))} className={pillClass(filter.shootingStatus === s)}>
-            {COSPLAY_SHOOTING_STATUS_LABELS[s]}
-          </button>
-        ))}
+        )}
       </div>
 
       {filtered.length === 0 ? (
