@@ -6,6 +6,10 @@ import type {
   ParticipationEntry,
   EntryFilter,
   CosplayPlan,
+  ShootingTarget,
+  TimeBand,
+  GreetingLevel,
+  ShootingPolicy,
 } from '@/types';
 
 export const PARTICIPATION_TYPE_LABELS: Record<ParticipationType, string> = {
@@ -37,6 +41,43 @@ export const PHOTOGRAPHER_SHOOTING_STYLE_LABELS: Record<PhotographerShootingStyl
   portrait: 'ポートレート寄り',
   recreation: '作品再現寄り',
   social: '交流メイン',
+};
+
+export const TIME_BAND_LABELS: Record<TimeBand, string> = {
+  morning: '午前',
+  noon: '昼',
+  evening: '夕方',
+  night: '夜',
+  allday: '終日',
+  undecided: '未定',
+};
+
+export const GREETING_LEVEL_LABELS: Record<GreetingLevel, string> = {
+  welcome: '挨拶歓迎',
+  mutual: '相互ならOK',
+  acquaintance: '知り合いのみ',
+  quiet: '控えめ',
+};
+
+export const SHOOTING_POLICY_LABELS: Record<ShootingPolicy, string> = {
+  ok: '撮影OK',
+  mutual: '相互ならOK',
+  acquaintance: '知り合いのみ',
+  no: '撮影不可',
+};
+
+export const GREETING_LEVEL_COLORS: Record<GreetingLevel, string> = {
+  welcome: 'bg-emerald-100 text-emerald-800',
+  mutual: 'bg-blue-100 text-blue-800',
+  acquaintance: 'bg-yellow-100 text-yellow-800',
+  quiet: 'bg-gray-100 text-gray-600',
+};
+
+export const SHOOTING_POLICY_COLORS: Record<ShootingPolicy, string> = {
+  ok: 'bg-violet-100 text-violet-800',
+  mutual: 'bg-blue-100 text-blue-800',
+  acquaintance: 'bg-yellow-100 text-yellow-800',
+  no: 'bg-red-100 text-red-800',
 };
 
 export const PARTICIPATION_TYPE_COLORS: Record<ParticipationType, string> = {
@@ -100,21 +141,68 @@ export function getEntryPlans(entry: ParticipationEntry): CosplayPlan[] {
   return [];
 }
 
-/** 挨拶歓迎（コスプレ・挨拶歓迎スタンス） */
-export function isGreetingWelcome(e: ParticipationEntry): boolean {
-  return e.participationType === 'cosplay' && e.cosplayInfo?.shootingStatus === 'greeting_welcome';
+/** カメラマンの撮りたい作品・キャラ（shootingTargets 優先、無ければ targetWorks を1件目として後方互換） */
+export function getEntryTargets(entry: ParticipationEntry): ShootingTarget[] {
+  if (entry.shootingTargets?.length) return entry.shootingTargets;
+  if (entry.photographerInfo?.targetWorks) {
+    return [{ workTitle: entry.photographerInfo.targetWorks }];
+  }
+  return [];
 }
 
-const COSPLAY_SHOOTING_OK: CosplayShootingStatus[] = ['greeting_welcome', 'mutual_ok', 'after_meeting_ok', 'planned'];
-const PHOTO_SHOOTING_OK: PhotographerFirstMeetStatus[] = ['ok', 'negotiable', 'mutual_only'];
+/** 挨拶歓迎度を取得（新フィールド優先。無ければ旧 shootingStatus / firstMeetStatus から推定） */
+export function getGreetingLevel(e: ParticipationEntry): GreetingLevel | null {
+  if (e.greetingLevel) return e.greetingLevel;
+  if (e.participationType === 'cosplay' && e.cosplayInfo) {
+    const s = e.cosplayInfo.shootingStatus;
+    if (s === 'greeting_welcome') return 'welcome';
+    if (s === 'mutual_ok' || s === 'after_meeting_ok') return 'mutual';
+    if (s === 'acquaintance_only') return 'acquaintance';
+    if (s === 'no_shooting') return 'quiet';
+    return 'welcome';
+  }
+  if (e.participationType === 'photographer' && e.photographerInfo) {
+    const f = e.photographerInfo.firstMeetStatus;
+    if (f === 'ok' || f === 'negotiable') return 'welcome';
+    if (f === 'mutual_only') return 'mutual';
+    return 'acquaintance';
+  }
+  return null;
+}
 
-/** 撮影相談OK（撮影が歓迎・相談可能なコスプレイヤー / カメラマン） */
+/** 撮影相談可否を取得（新フィールド優先。無ければ旧フィールドから推定） */
+export function getShootingPolicy(e: ParticipationEntry): ShootingPolicy | null {
+  if (e.shootingPolicy) return e.shootingPolicy;
+  if (e.participationType === 'cosplay' && e.cosplayInfo) {
+    const s = e.cosplayInfo.shootingStatus;
+    if (s === 'greeting_welcome' || s === 'planned') return 'ok';
+    if (s === 'mutual_ok' || s === 'after_meeting_ok') return 'mutual';
+    if (s === 'acquaintance_only') return 'acquaintance';
+    if (s === 'no_shooting') return 'no';
+    return 'ok';
+  }
+  if (e.participationType === 'photographer' && e.photographerInfo) {
+    const f = e.photographerInfo.firstMeetStatus;
+    if (f === 'ok' || f === 'negotiable') return 'ok';
+    if (f === 'mutual_only') return 'mutual';
+    if (f === 'acquaintance_only') return 'acquaintance';
+  }
+  return null;
+}
+
+export function getTimeBand(e: ParticipationEntry): TimeBand | null {
+  return e.timeBand ?? null;
+}
+
+/** 挨拶歓迎 */
+export function isGreetingWelcome(e: ParticipationEntry): boolean {
+  return getGreetingLevel(e) === 'welcome';
+}
+
+/** 撮影相談OK（撮影が歓迎・相談可能） */
 export function isShootingConsultOk(e: ParticipationEntry): boolean {
-  if (e.participationType === 'cosplay')
-    return Boolean(e.cosplayInfo && COSPLAY_SHOOTING_OK.includes(e.cosplayInfo.shootingStatus));
-  if (e.participationType === 'photographer')
-    return Boolean(e.photographerInfo && PHOTO_SHOOTING_OK.includes(e.photographerInfo.firstMeetStatus));
-  return false;
+  const p = getShootingPolicy(e);
+  return p === 'ok' || p === 'mutual';
 }
 
 export interface EventStats {

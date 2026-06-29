@@ -56,6 +56,21 @@ export interface CosplayPlan {
   imageUrl?: string;
 }
 
+/** カメラマンの撮りたい作品・キャラ（複数登録できる） */
+export interface ShootingTarget {
+  workTitle: string;
+  characterName?: string;
+  timeSlot?: string;
+  memo?: string;
+}
+
+/** 参加時間帯 */
+export type TimeBand = 'morning' | 'noon' | 'evening' | 'night' | 'allday' | 'undecided';
+/** 挨拶歓迎度 */
+export type GreetingLevel = 'welcome' | 'mutual' | 'acquaintance' | 'quiet';
+/** 撮影相談可否 */
+export type ShootingPolicy = 'ok' | 'mutual' | 'acquaintance' | 'no';
+
 export interface PhotographerInfo {
   targetWorks: string;
   availableHours: string;
@@ -103,6 +118,15 @@ export interface ParticipationEntry {
   /** 当日の予定キャラ（複数可） */
   cosplayPlans?: CosplayPlan[];
   photographerInfo?: PhotographerInfo;
+  /** カメラマンの撮りたい作品・キャラ（複数可） */
+  shootingTargets?: ShootingTarget[];
+  /** 見つけてもらう設定 */
+  timeBand?: TimeBand;
+  greetingLevel?: GreetingLevel;
+  shootingPolicy?: ShootingPolicy;
+  /** 一般・未定向けの軽い情報 */
+  likedWorks?: string;
+  wantWorks?: string;
   createdAt: string;
   updatedAt?: string;
 }

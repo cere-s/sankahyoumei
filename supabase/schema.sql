@@ -55,6 +55,14 @@ CREATE TABLE IF NOT EXISTS participation_entries (
   photographer_availability  TEXT,
   portfolio_url              TEXT,
   shooting_style             TEXT[],
+  shooting_targets           JSONB,   -- 撮りたい作品・キャラ配列 [{workTitle,characterName,timeSlot,memo}]
+
+  -- ステップフォーム：見つけてもらう設定
+  time_band       TEXT,   -- 参加時間帯 morning/noon/evening/night/allday/undecided
+  greeting_level  TEXT,   -- 挨拶歓迎度 welcome/mutual/acquaintance/quiet
+  shooting_policy TEXT,   -- 撮影相談可否 ok/mutual/acquaintance/no
+  liked_works     TEXT,   -- 一般・未定：好きな作品
+  want_works      TEXT,   -- 一般・未定：会いたい作品
 
   -- 共通任意
   image_url TEXT,

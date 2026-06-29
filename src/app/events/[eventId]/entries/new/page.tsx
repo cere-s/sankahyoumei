@@ -3,9 +3,10 @@ import Link from 'next/link';
 import { getEventById } from '@/lib/events';
 import { getCosplaySuggestions, getEntriesByUserId } from '@/lib/entries';
 import { getCurrentAuth } from '@/lib/auth';
-import { EntryForm } from '@/components/EntryForm';
+import { StepEntryForm } from '@/components/StepEntryForm';
 import { XLoginButton } from '@/components/auth/XLoginButton';
 import { ParticipationNotice } from '@/components/ParticipationNotice';
+import { getGreetingLevel, getShootingPolicy } from '@/lib/utils';
 
 interface Props {
   params: Promise<{ eventId: string }>;
@@ -31,10 +32,9 @@ export default async function NewEntryPage({ params }: Props) {
     ? {
         displayName: previous.displayName,
         participationType: previous.participationType,
-        cosplayInfo: previous.cosplayInfo
-          ? { workName: '', characterName: '', shootingStatus: previous.cosplayInfo.shootingStatus }
-          : undefined,
-        photographerInfo: previous.photographerInfo,
+        timeBand: previous.timeBand,
+        greetingLevel: getGreetingLevel(previous) ?? undefined,
+        shootingPolicy: getShootingPolicy(previous) ?? undefined,
       }
     : undefined;
 
@@ -50,11 +50,11 @@ export default async function NewEntryPage({ params }: Props) {
       <ParticipationNotice className="mb-6" />
 
       {auth.user && auth.profile?.xUsername ? (
-        <EntryForm
+        <StepEntryForm
           eventId={event.id}
           eventName={event.name}
           eventHashtag={event.hashtag}
-          defaultDate={event.date}
+          eventDate={event.date}
           suggestions={suggestions}
           profile={auth.profile}
           defaults={defaults}

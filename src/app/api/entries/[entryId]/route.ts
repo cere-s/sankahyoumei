@@ -57,6 +57,12 @@ export async function PUT(request: NextRequest, { params }: { params: Params }) 
       cosplayInfo: body.cosplayInfo as Parameters<typeof updateEntry>[1]['cosplayInfo'],
       cosplayPlans: body.cosplayPlans as Parameters<typeof updateEntry>[1]['cosplayPlans'],
       photographerInfo: body.photographerInfo as Parameters<typeof updateEntry>[1]['photographerInfo'],
+      shootingTargets: body.shootingTargets as Parameters<typeof updateEntry>[1]['shootingTargets'],
+      timeBand: body.timeBand as Parameters<typeof updateEntry>[1]['timeBand'],
+      greetingLevel: body.greetingLevel as Parameters<typeof updateEntry>[1]['greetingLevel'],
+      shootingPolicy: body.shootingPolicy as Parameters<typeof updateEntry>[1]['shootingPolicy'],
+      likedWorks: body.likedWorks !== undefined ? String(body.likedWorks) : undefined,
+      wantWorks: body.wantWorks !== undefined ? String(body.wantWorks) : undefined,
     });
     await refreshOgImage(entryId);
     return NextResponse.json(updated);

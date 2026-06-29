@@ -6,6 +6,10 @@ import type {
   PhotographerShootingStyle,
   CreateEntryResult,
   CosplayPlan,
+  ShootingTarget,
+  TimeBand,
+  GreetingLevel,
+  ShootingPolicy,
 } from '@/types';
 import { createServerClient, createAdminClient, createAuthServerClient } from './supabase/server';
 import { generateToken, hashToken, verifyToken } from './token';
@@ -34,6 +38,12 @@ interface DBEntry {
   photographer_availability: string | null;
   portfolio_url: string | null;
   shooting_style: string[] | null;
+  shooting_targets: unknown;
+  time_band: string | null;
+  greeting_level: string | null;
+  shooting_policy: string | null;
+  liked_works: string | null;
+  want_works: string | null;
   image_url: string | null;
   image_key: string | null;
   image_alt: string | null;
@@ -81,6 +91,41 @@ function parsePlans(raw: unknown, workName: string | null, characterName: string
   return [];
 }
 
+/** 撮りたい作品・キャラ配列を正規化。空なら targetWorks を1件目として後方互換 */
+function parseTargets(raw: unknown, targetWorks: string | null): ShootingTarget[] {
+  if (Array.isArray(raw)) {
+    const targets = (raw as unknown[])
+      .map((p) => {
+        const o = (p ?? {}) as Record<string, unknown>;
+        return {
+          workTitle: String(o.workTitle ?? '').trim(),
+          characterName: o.characterName ? String(o.characterName).trim() : undefined,
+          timeSlot: o.timeSlot ? String(o.timeSlot) : undefined,
+          memo: o.memo ? String(o.memo) : undefined,
+        } as ShootingTarget;
+      })
+      .filter((p) => p.workTitle);
+    if (targets.length) return targets;
+  }
+  if (targetWorks) return [{ workTitle: targetWorks }];
+  return [];
+}
+
+/** 保存用に撮りたい作品配列を整形。空なら null */
+function cleanTargetsForStorage(targets?: ShootingTarget[]): ShootingTarget[] | null {
+  if (!targets?.length) return null;
+  const cleaned = targets
+    .map((p) => {
+      const o: ShootingTarget = { workTitle: (p.workTitle ?? '').trim() };
+      if (p.characterName?.trim()) o.characterName = p.characterName.trim();
+      if (p.timeSlot?.trim()) o.timeSlot = p.timeSlot.trim();
+      if (p.memo?.trim()) o.memo = p.memo.trim();
+      return o;
+    })
+    .filter((p) => p.workTitle);
+  return cleaned.length ? cleaned : null;
+}
+
 /** 保存用に予定配列を整形（trim・空項目除去・空予定の除去）。空なら null */
 function cleanPlansForStorage(plans?: CosplayPlan[]): CosplayPlan[] | null {
   if (!plans?.length) return null;
@@ -123,6 +168,11 @@ function dbToEntry(row: DBEntry): ParticipationEntry {
     xUserId: row.x_user_id ?? undefined,
     xUsernameSnapshot: row.x_username_snapshot ?? undefined,
     authStatus: (row.auth_status as ParticipationEntry['authStatus']) ?? 'unverified',
+    timeBand: (row.time_band as TimeBand | null) ?? undefined,
+    greetingLevel: (row.greeting_level as GreetingLevel | null) ?? undefined,
+    shootingPolicy: (row.shooting_policy as ShootingPolicy | null) ?? undefined,
+    likedWorks: row.liked_works ?? undefined,
+    wantWorks: row.want_works ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at ?? undefined,
   };
@@ -145,6 +195,7 @@ function dbToEntry(row: DBEntry): ParticipationEntry {
       portfolioUrl: row.portfolio_url ?? '',
       shootingStyles: (row.shooting_style ?? []) as PhotographerShootingStyle[],
     };
+    entry.shootingTargets = parseTargets(row.shooting_targets, row.photographer_target_works);
   }
 
   return entry;
@@ -327,6 +378,14 @@ export interface CreateEntryInput {
   cosplayInfo?: ParticipationEntry['cosplayInfo'];
   cosplayPlans?: CosplayPlan[];
   photographerInfo?: ParticipationEntry['photographerInfo'];
+  shootingTargets?: ShootingTarget[];
+  timeBand?: TimeBand;
+  greetingLevel?: GreetingLevel;
+  shootingPolicy?: ShootingPolicy;
+  likedWorks?: string;
+  wantWorks?: string;
+  /** プロフィール/ポートフォリオURL（全スタイル共通） */
+  portfolioUrl?: string;
   // Xログイン由来（必須：なりすまし防止のためログイン必須）
   userId: string;
   xUserId?: string;
@@ -351,6 +410,12 @@ export async function createEntry(input: CreateEntryInput): Promise<CreateEntryR
       cosplayInfo: input.cosplayInfo,
       cosplayPlans: input.cosplayPlans?.length ? input.cosplayPlans : input.cosplayInfo ? [{ workTitle: input.cosplayInfo.workName, characterName: input.cosplayInfo.characterName }] : undefined,
       photographerInfo: input.photographerInfo,
+      shootingTargets: input.shootingTargets,
+      timeBand: input.timeBand,
+      greetingLevel: input.greetingLevel,
+      shootingPolicy: input.shootingPolicy,
+      likedWorks: input.likedWorks,
+      wantWorks: input.wantWorks,
       createdAt: new Date().toISOString(),
     };
     return { entry, editToken: 'demo-token' };
@@ -391,14 +456,22 @@ export async function createEntry(input: CreateEntryInput): Promise<CreateEntryR
     character_name: cleanPlansForStorage(input.cosplayPlans)?.[0]?.characterName || input.cosplayInfo?.characterName || null,
     shooting_status: input.cosplayInfo?.shootingStatus || null,
     cosplay_plans: cleanPlansForStorage(input.cosplayPlans),
-    // photographer
-    photographer_target_works: input.photographerInfo?.targetWorks || null,
+    // photographer（shooting_targets が本体。photographer_target_works は1件目との後方互換）
+    photographer_target_works:
+      cleanTargetsForStorage(input.shootingTargets)?.[0]?.workTitle || input.photographerInfo?.targetWorks || null,
     photographer_available_time: input.photographerInfo?.availableHours || null,
     photographer_availability: input.photographerInfo?.firstMeetStatus || null,
-    portfolio_url: input.photographerInfo?.portfolioUrl || null,
+    portfolio_url: input.portfolioUrl?.trim() || input.photographerInfo?.portfolioUrl || null,
     shooting_style: input.photographerInfo?.shootingStyles?.length
       ? input.photographerInfo.shootingStyles
       : null,
+    shooting_targets: cleanTargetsForStorage(input.shootingTargets),
+    // 見つけてもらう設定
+    time_band: input.timeBand || null,
+    greeting_level: input.greetingLevel || null,
+    shooting_policy: input.shootingPolicy || null,
+    liked_works: input.likedWorks?.trim() || null,
+    want_works: input.wantWorks?.trim() || null,
   };
 
   const { data, error } = await supabase
@@ -423,6 +496,12 @@ export interface UpdateEntryInput {
   cosplayInfo?: ParticipationEntry['cosplayInfo'];
   cosplayPlans?: CosplayPlan[];
   photographerInfo?: ParticipationEntry['photographerInfo'];
+  shootingTargets?: ShootingTarget[];
+  timeBand?: TimeBand;
+  greetingLevel?: GreetingLevel;
+  shootingPolicy?: ShootingPolicy;
+  likedWorks?: string;
+  wantWorks?: string;
 }
 
 export async function updateEntry(
@@ -438,6 +517,12 @@ export async function updateEntry(
       cosplayInfo: input.cosplayInfo ?? base.cosplayInfo,
       cosplayPlans: input.cosplayPlans ?? base.cosplayPlans,
       photographerInfo: input.photographerInfo ?? base.photographerInfo,
+      shootingTargets: input.shootingTargets ?? base.shootingTargets,
+      timeBand: input.timeBand ?? base.timeBand,
+      greetingLevel: input.greetingLevel ?? base.greetingLevel,
+      shootingPolicy: input.shootingPolicy ?? base.shootingPolicy,
+      likedWorks: input.likedWorks ?? base.likedWorks,
+      wantWorks: input.wantWorks ?? base.wantWorks,
     };
   }
   const admin = createAdminClient();
@@ -489,8 +574,15 @@ export async function updateEntry(
       updateData.character_name = input.cosplayInfo.characterName || null;
     }
   }
+  if (input.shootingTargets !== undefined) {
+    const targets = cleanTargetsForStorage(input.shootingTargets);
+    updateData.shooting_targets = targets;
+    updateData.photographer_target_works = targets?.[0]?.workTitle || null;
+  }
   if (input.photographerInfo) {
-    updateData.photographer_target_works = input.photographerInfo.targetWorks || null;
+    if (input.shootingTargets === undefined) {
+      updateData.photographer_target_works = input.photographerInfo.targetWorks || null;
+    }
     updateData.photographer_available_time = input.photographerInfo.availableHours || null;
     updateData.photographer_availability = input.photographerInfo.firstMeetStatus || null;
     updateData.portfolio_url = input.photographerInfo.portfolioUrl || null;
@@ -498,6 +590,11 @@ export async function updateEntry(
       ? input.photographerInfo.shootingStyles
       : null;
   }
+  if (input.timeBand !== undefined) updateData.time_band = input.timeBand || null;
+  if (input.greetingLevel !== undefined) updateData.greeting_level = input.greetingLevel || null;
+  if (input.shootingPolicy !== undefined) updateData.shooting_policy = input.shootingPolicy || null;
+  if (input.likedWorks !== undefined) updateData.liked_works = input.likedWorks.trim() || null;
+  if (input.wantWorks !== undefined) updateData.want_works = input.wantWorks.trim() || null;
 
   const { data, error } = await admin
     .from('participation_entries')
