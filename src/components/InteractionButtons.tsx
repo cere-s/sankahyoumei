@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import type { InteractionType } from '@/types';
-import { INTERACTION_LABELS, INTERACTION_DONE_LABELS, INTERACTION_TYPES } from '@/lib/utils';
+import type { InteractionType, ParticipationType } from '@/types';
+import { INTERACTION_LABELS, INTERACTION_DONE_LABELS, availableInteractionTypes } from '@/lib/utils';
 import { XLoginButton } from './auth/XLoginButton';
 
 interface Props {
@@ -12,6 +12,8 @@ interface Props {
   toUserId?: string;
   /** 閲覧者のユーザーID（未ログインなら null） */
   viewerUserId: string | null;
+  /** 対象の参加種別（カメラマンに「撮りたい」、コスプレに「撮られたい」は出さない） */
+  targetType?: ParticipationType;
   /** 閲覧者が送信済みの種別 */
   initialSelected?: InteractionType[];
   /** 参加表明ごとの受信数（人数のみ・控えめに表示） */
@@ -34,6 +36,7 @@ export function InteractionButtons({
   toEntryId,
   toUserId,
   viewerUserId,
+  targetType,
   initialSelected = [],
   counts = {},
   restricted = false,
@@ -164,7 +167,7 @@ export function InteractionButtons({
           参加者に伝える
         </p>
         <div className="flex flex-wrap gap-1.5">
-        {INTERACTION_TYPES.map((type) => {
+        {availableInteractionTypes(targetType).map((type) => {
           const on = selected.has(type);
           const busy = pending.has(type);
           const count = localCounts[type] ?? 0;

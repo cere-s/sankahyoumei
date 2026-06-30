@@ -199,6 +199,7 @@ export function EntryCard({ entry, eventId, eventName, interaction }: Props) {
               <InteractionButtons
                 toEntryId={entry.id}
                 toUserId={entry.userId}
+                targetType={entry.participationType}
                 viewerUserId={interaction.viewerUserId}
                 initialSelected={interaction.selected}
                 counts={interaction.counts}

@@ -131,6 +131,7 @@ export default async function EntryDetailPage({ params }: Props) {
             <InteractionButtons
               toEntryId={entry.id}
               toUserId={entry.userId}
+              targetType={entry.participationType}
               viewerUserId={user?.id ?? null}
               initialSelected={interaction?.myIntents[entry.id] ?? []}
               counts={interaction?.countsByEntry[entry.id] ?? {}}

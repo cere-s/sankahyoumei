@@ -37,6 +37,19 @@ export function isInteractionType(v: unknown): v is InteractionType {
   return v === 'want_to_shoot' || v === 'want_to_be_shot' || v === 'want_to_meet';
 }
 
+/**
+ * 対象の参加種別に応じて出すべき意思表示の種類を返す。
+ * - カメラマン宛: 「撮りたい」は出さない（カメラマンを撮る対象としない）
+ * - コスプレ宛: 「撮られたい」は出さない（コスプレに撮ってもらう関係ではない）
+ */
+export function availableInteractionTypes(targetType?: ParticipationType): InteractionType[] {
+  return INTERACTION_TYPES.filter((t) => {
+    if (targetType === 'photographer' && t === 'want_to_shoot') return false;
+    if (targetType === 'cosplay' && t === 'want_to_be_shot') return false;
+    return true;
+  });
+}
+
 export const PARTICIPATION_TYPE_LABELS: Record<ParticipationType, string> = {
   cosplay: 'コスプレ',
   photographer: 'カメラマン',
