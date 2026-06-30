@@ -14,13 +14,15 @@ function normalize(s: string) {
 
 interface Props {
   events: Event[];
+  /** イベントID → 参加表明数 */
+  counts?: Record<string, number>;
   hasImported: boolean;
   today: string;
   initialQ?: string;
   initialRegion?: string;
 }
 
-export function EventsBrowser({ events, hasImported, today, initialQ = '', initialRegion = '' }: Props) {
+export function EventsBrowser({ events, counts = {}, hasImported, today, initialQ = '', initialRegion = '' }: Props) {
   const [q, setQ] = useState(initialQ);
   const [region, setRegion] = useState(initialRegion);
 
@@ -165,7 +167,7 @@ export function EventsBrowser({ events, hasImported, today, initialQ = '', initi
           {upcomingShown.length > 0 && (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {upcomingShown.map((event) => (
-                <EventCard key={event.id} event={event} today={today} />
+                <EventCard key={event.id} event={event} today={today} count={counts[event.id] ?? 0} />
               ))}
             </div>
           )}
@@ -180,7 +182,7 @@ export function EventsBrowser({ events, hasImported, today, initialQ = '', initi
               </div>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {pastShown.map((event) => (
-                  <EventCard key={event.id} event={event} today={today} />
+                  <EventCard key={event.id} event={event} today={today} count={counts[event.id] ?? 0} />
                 ))}
               </div>
             </div>

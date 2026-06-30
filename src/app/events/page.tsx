@@ -1,4 +1,5 @@
 import { getAllEvents } from '@/lib/events';
+import { getEntryCountsByEvent } from '@/lib/entries';
 import { EventsBrowser } from '@/components/EventsBrowser';
 import { todayISO } from '@/lib/utils';
 
@@ -10,7 +11,7 @@ interface Props {
 
 export default async function EventsPage({ searchParams }: Props) {
   const { q = '', region = '' } = await searchParams;
-  const events = await getAllEvents();
+  const [events, counts] = await Promise.all([getAllEvents(), getEntryCountsByEvent()]);
   const hasImported = events.some((e) => e.isImported);
 
   return (
@@ -18,7 +19,7 @@ export default async function EventsPage({ searchParams }: Props) {
       <h1 className="text-xl font-bold text-gray-900 mb-1">イベント一覧</h1>
       <p className="text-sm text-gray-500 mb-4">参加表明したいイベントを選んでください</p>
 
-      <EventsBrowser events={events} hasImported={hasImported} today={todayISO()} initialQ={q} initialRegion={region} />
+      <EventsBrowser events={events} counts={counts} hasImported={hasImported} today={todayISO()} initialQ={q} initialRegion={region} />
     </div>
   );
 }
