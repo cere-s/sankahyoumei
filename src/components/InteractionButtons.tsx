@@ -156,7 +156,14 @@ export function InteractionButtons({
 
   return (
     <div className={className} onClick={stop}>
-      <div className="flex flex-wrap gap-1.5">
+      <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-2.5">
+        <p className="text-[11px] font-bold text-gray-500 mb-1.5 flex items-center gap-1">
+          <svg className="w-3 h-3 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path d="M2.94 2.94a1 1 0 011.06-.23l13 5a1 1 0 010 1.86l-13 5A1 1 0 013 13.6L4.5 10 3 6.4a1 1 0 01-.06-3.46zM5.8 10.8L5 12.8 14.2 9 5 5.2 5.8 7.2 9 8a.5.5 0 010 1l-3.2.8z" />
+          </svg>
+          参加者に伝える
+        </p>
+        <div className="flex flex-wrap gap-1.5">
         {INTERACTION_TYPES.map((type) => {
           const on = selected.has(type);
           const busy = pending.has(type);
@@ -184,22 +191,23 @@ export function InteractionButtons({
             </button>
           );
         })}
-      </div>
-
-      {showLogin && !viewerUserId && (
-        <div className="mt-2 rounded-lg bg-gray-50 border border-gray-100 p-3 text-center space-y-2">
-          <p className="text-xs text-gray-600">交流機能を使うにはログインが必要です</p>
-          <div className="flex justify-center">
-            <XLoginButton
-              next={pathname}
-              label="Xでログイン"
-              className="inline-flex items-center justify-center gap-2 bg-black text-white rounded-lg px-4 py-2 text-xs font-bold hover:bg-gray-800 transition-colors"
-            />
-          </div>
         </div>
-      )}
 
-      {error && <p className="mt-1 text-[11px] text-red-500">{error}</p>}
+        {showLogin && !viewerUserId && (
+          <div className="mt-2 rounded-lg bg-white border border-gray-100 p-3 text-center space-y-2">
+            <p className="text-xs text-gray-600">交流機能を使うにはログインが必要です</p>
+            <div className="flex justify-center">
+              <XLoginButton
+                next={pathname}
+                label="Xでログイン"
+                className="inline-flex items-center justify-center gap-2 bg-black text-white rounded-lg px-4 py-2 text-xs font-bold hover:bg-gray-800 transition-colors"
+              />
+            </div>
+          </div>
+        )}
+
+        {error && <p className="mt-1 text-[11px] text-red-500">{error}</p>}
+      </div>
     </div>
   );
 }
