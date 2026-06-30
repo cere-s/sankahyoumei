@@ -24,6 +24,8 @@ export default async function EditEntryPage({ params, searchParams }: Props) {
   ]);
 
   if (!event || !entry) notFound();
+  // URL のイベントとこの参加表明のイベントが一致しない場合は 404
+  if (entry.eventId !== event.id) notFound();
 
   // 認可: 編集トークンがある、またはログイン本人（user_id一致）
   const isOwner = Boolean(user && entry.userId && user.id === entry.userId);

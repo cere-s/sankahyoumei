@@ -5,6 +5,7 @@ import { getEventById } from '@/lib/events';
 import { getEntriesByEventId } from '@/lib/entries';
 import { getEventInteractionContext } from '@/lib/interactions';
 import { getCurrentUser } from '@/lib/auth';
+import { safeHttpUrl } from '@/lib/validation';
 import { ParticipantList } from '@/components/ParticipantList';
 import { ParticipationNotice } from '@/components/ParticipationNotice';
 import { EventOwnerWithdraw } from '@/components/EventOwnerWithdraw';
@@ -158,19 +159,19 @@ export default async function EventDetailPage({ params, searchParams }: Props) {
               {event.address && (
                 <div className="flex gap-2"><dt className="text-gray-400 shrink-0 w-14">住所</dt><dd>{event.address}</dd></div>
               )}
-              {event.officialUrl && (
+              {safeHttpUrl(event.officialUrl) && (
                 <div className="flex gap-2"><dt className="text-gray-400 shrink-0 w-14">公式</dt>
-                  <dd><a href={event.officialUrl} target="_blank" rel="noopener noreferrer" className="text-violet-600 hover:underline break-all">{event.officialUrl}</a></dd>
+                  <dd><a href={safeHttpUrl(event.officialUrl)!} target="_blank" rel="noopener noreferrer" className="text-violet-600 hover:underline break-all">{event.officialUrl}</a></dd>
                 </div>
               )}
-              {event.xUrl && (
+              {safeHttpUrl(event.xUrl) && (
                 <div className="flex gap-2"><dt className="text-gray-400 shrink-0 w-14">X</dt>
-                  <dd><a href={event.xUrl} target="_blank" rel="noopener noreferrer" className="text-violet-600 hover:underline break-all">{event.xUrl}</a></dd>
+                  <dd><a href={safeHttpUrl(event.xUrl)!} target="_blank" rel="noopener noreferrer" className="text-violet-600 hover:underline break-all">{event.xUrl}</a></dd>
                 </div>
               )}
-              {event.isImported && event.sourceUrl && (
+              {event.isImported && safeHttpUrl(event.sourceUrl) && (
                 <div className="flex gap-2"><dt className="text-gray-400 shrink-0 w-14">取得元</dt>
-                  <dd><a href={event.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-violet-600 hover:underline break-all">cos-cam.work で確認 →</a></dd>
+                  <dd><a href={safeHttpUrl(event.sourceUrl)!} target="_blank" rel="noopener noreferrer" className="text-violet-600 hover:underline break-all">cos-cam.work で確認 →</a></dd>
                 </div>
               )}
             </dl>

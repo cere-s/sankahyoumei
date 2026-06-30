@@ -1,12 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createEntry, getEntriesByEventId, setEntryImage } from '@/lib/entries';
+import { getEventById } from '@/lib/events';
 import { getCurrentAuth } from '@/lib/auth';
 import { rateLimit, getClientIp } from '@/lib/rateLimit';
 import { validateImageFile, uploadEntryImage } from '@/lib/imageUpload';
 import { refreshOgImage } from '@/lib/og';
 import { r2Configured } from '@/lib/r2';
 import { DEMO } from '@/lib/demo';
-import type { ParticipationType, ParticipationEntry } from '@/types';
+import {
+  isParticipationType,
+  clampText,
+  asTimeBand,
+  asGreetingLevel,
+  asShootingPolicy,
+  sanitizeCosplayInfo,
+  sanitizeCosplayPlans,
+  sanitizePhotographerInfo,
+  sanitizeShootingTargets,
+  LIMITS,
+} from '@/lib/validation';
+import type { ParticipationEntry } from '@/types';
 
 export async function GET(request: NextRequest) {
   const eventId = request.nextUrl.searchParams.get('eventId');
@@ -14,6 +27,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'eventId is required' }, { status: 400 });
   }
   try {
+    // 取り下げ済み／存在しないイベントの参加表明は公開しない
+    const event = await getEventById(eventId);
+    if (!event) return NextResponse.json([]);
     const entries = await getEntriesByEventId(eventId);
     return NextResponse.json(entries);
   } catch (e) {
@@ -61,8 +77,17 @@ export async function POST(request: NextRequest) {
   if (!eventId || !displayName || !participationType || !participationDate) {
     return NextResponse.json({ error: '必須項目が入力されていません' }, { status: 400 });
   }
-  if (String(displayName).length > 50 || String(body.comment ?? '').length > 1000) {
+  if (!isParticipationType(participationType)) {
+    return NextResponse.json({ error: '参加種別が正しくありません' }, { status: 400 });
+  }
+  if (String(displayName).length > LIMITS.displayName || String(body.comment ?? '').length > LIMITS.comment) {
     return NextResponse.json({ error: '入力内容が長すぎます' }, { status: 400 });
+  }
+
+  // 取り下げ済み／存在しないイベントには参加表明を作成させない
+  const event = await getEventById(String(eventId));
+  if (!event) {
+    return NextResponse.json({ error: 'このイベントは見つからないか、公開されていません' }, { status: 404 });
   }
 
   // 画像があれば作成前に検証（不正なら作成せず弾く）
@@ -78,23 +103,23 @@ export async function POST(request: NextRequest) {
   try {
     const result = await createEntry({
       eventId: String(eventId),
-      displayName: String(displayName).trim(),
+      displayName: clampText(displayName, LIMITS.displayName) ?? '',
       xId, // 手入力ではなくログイン中のXユーザー名を使用
-      participationType: String(participationType) as ParticipationType,
+      participationType, // 上で isParticipationType 検証済み
       participationDate: String(participationDate),
-      comment: String(body.comment ?? '').trim(),
-      note: body.note ? String(body.note).trim() : undefined,
+      comment: clampText(body.comment, LIMITS.comment) ?? '',
+      note: clampText(body.note, LIMITS.note),
       tweetUrl: body.tweetUrl ? String(body.tweetUrl).trim() : undefined,
       deletePassword: body.deletePassword ? String(body.deletePassword) : undefined,
-      cosplayInfo: body.cosplayInfo as ParticipationEntry['cosplayInfo'] | undefined,
-      cosplayPlans: body.cosplayPlans as ParticipationEntry['cosplayPlans'] | undefined,
-      photographerInfo: body.photographerInfo as ParticipationEntry['photographerInfo'] | undefined,
-      shootingTargets: body.shootingTargets as ParticipationEntry['shootingTargets'] | undefined,
-      timeBand: body.timeBand as ParticipationEntry['timeBand'] | undefined,
-      greetingLevel: body.greetingLevel as ParticipationEntry['greetingLevel'] | undefined,
-      shootingPolicy: body.shootingPolicy as ParticipationEntry['shootingPolicy'] | undefined,
-      likedWorks: body.likedWorks ? String(body.likedWorks) : undefined,
-      wantWorks: body.wantWorks ? String(body.wantWorks) : undefined,
+      cosplayInfo: sanitizeCosplayInfo(body.cosplayInfo as ParticipationEntry['cosplayInfo']),
+      cosplayPlans: sanitizeCosplayPlans(body.cosplayPlans as ParticipationEntry['cosplayPlans']),
+      photographerInfo: sanitizePhotographerInfo(body.photographerInfo as ParticipationEntry['photographerInfo']),
+      shootingTargets: sanitizeShootingTargets(body.shootingTargets as ParticipationEntry['shootingTargets']),
+      timeBand: asTimeBand(body.timeBand),
+      greetingLevel: asGreetingLevel(body.greetingLevel),
+      shootingPolicy: asShootingPolicy(body.shootingPolicy),
+      likedWorks: clampText(body.likedWorks, LIMITS.likedWorks),
+      wantWorks: clampText(body.wantWorks, LIMITS.wantWorks),
       userId: user.id,
       xUserId: profile?.xUserId,
       xUsernameSnapshot: profile?.xUsername,

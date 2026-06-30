@@ -2,6 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getEntryById, updateEntry, hideEntry } from '@/lib/entries';
 import { getCurrentUser } from '@/lib/auth';
 import { refreshOgImage } from '@/lib/og';
+import {
+  clampText,
+  asTimeBand,
+  asGreetingLevel,
+  asShootingPolicy,
+  sanitizeCosplayInfo,
+  sanitizeCosplayPlans,
+  sanitizePhotographerInfo,
+  sanitizeShootingTargets,
+  LIMITS,
+} from '@/lib/validation';
 
 type Params = Promise<{ entryId: string }>;
 
@@ -51,18 +62,19 @@ export async function PUT(request: NextRequest, { params }: { params: Params }) 
     const updated = await updateEntry(entryId, {
       token: body.token ? String(body.token) : undefined,
       authUserId: user?.id ?? null,
-      comment: body.comment !== undefined ? String(body.comment) : undefined,
+      // 未送信(undefined)＝変更なし / 空文字＝クリア の挙動を保ちつつ長さを制限
+      comment: body.comment !== undefined ? (clampText(body.comment, LIMITS.comment) ?? '') : undefined,
       participationDate: body.participationDate ? String(body.participationDate) : undefined,
       tweetUrl: body.tweetUrl !== undefined ? String(body.tweetUrl) : undefined,
-      cosplayInfo: body.cosplayInfo as Parameters<typeof updateEntry>[1]['cosplayInfo'],
-      cosplayPlans: body.cosplayPlans as Parameters<typeof updateEntry>[1]['cosplayPlans'],
-      photographerInfo: body.photographerInfo as Parameters<typeof updateEntry>[1]['photographerInfo'],
-      shootingTargets: body.shootingTargets as Parameters<typeof updateEntry>[1]['shootingTargets'],
-      timeBand: body.timeBand as Parameters<typeof updateEntry>[1]['timeBand'],
-      greetingLevel: body.greetingLevel as Parameters<typeof updateEntry>[1]['greetingLevel'],
-      shootingPolicy: body.shootingPolicy as Parameters<typeof updateEntry>[1]['shootingPolicy'],
-      likedWorks: body.likedWorks !== undefined ? String(body.likedWorks) : undefined,
-      wantWorks: body.wantWorks !== undefined ? String(body.wantWorks) : undefined,
+      cosplayInfo: sanitizeCosplayInfo(body.cosplayInfo as Parameters<typeof updateEntry>[1]['cosplayInfo']),
+      cosplayPlans: sanitizeCosplayPlans(body.cosplayPlans as Parameters<typeof updateEntry>[1]['cosplayPlans']),
+      photographerInfo: sanitizePhotographerInfo(body.photographerInfo as Parameters<typeof updateEntry>[1]['photographerInfo']),
+      shootingTargets: sanitizeShootingTargets(body.shootingTargets as Parameters<typeof updateEntry>[1]['shootingTargets']),
+      timeBand: asTimeBand(body.timeBand),
+      greetingLevel: asGreetingLevel(body.greetingLevel),
+      shootingPolicy: asShootingPolicy(body.shootingPolicy),
+      likedWorks: body.likedWorks !== undefined ? (clampText(body.likedWorks, LIMITS.likedWorks) ?? '') : undefined,
+      wantWorks: body.wantWorks !== undefined ? (clampText(body.wantWorks, LIMITS.wantWorks) ?? '') : undefined,
     });
     await refreshOgImage(entryId);
     return NextResponse.json(updated);

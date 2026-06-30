@@ -4,8 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import type { Event } from '@/types';
 import { formatDate } from '@/lib/utils';
-
-const REGIONS = ['北海道', '東北', '関東', '東海', '関西', '中国四国', '九州', '沖縄'];
+import { safeHttpUrl, REGIONS } from '@/lib/validation';
 
 const inputClass =
   'w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300';
@@ -161,8 +160,8 @@ export function EventModeration({ events }: { events: Event[] }) {
                   <p className="text-xs text-gray-500 mt-1">
                     {formatDate(e.date)}{e.region ? `・${e.region}` : ''}・{e.location}
                   </p>
-                  {e.officialUrl && (
-                    <a href={e.officialUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-violet-600 hover:underline break-all">
+                  {safeHttpUrl(e.officialUrl) && (
+                    <a href={safeHttpUrl(e.officialUrl)!} target="_blank" rel="noopener noreferrer" className="text-xs text-violet-600 hover:underline break-all">
                       {e.officialUrl}
                     </a>
                   )}

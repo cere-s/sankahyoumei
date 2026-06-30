@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-
-const REGIONS = ['北海道', '東北', '関東', '東海', '関西', '中国四国', '九州', '沖縄'];
+import { REGIONS } from '@/lib/validation';
 
 interface DupEvent {
   id: string;

@@ -12,6 +12,7 @@ import { OwnerEntryActions } from '@/components/OwnerEntryActions';
 import { InteractionButtons } from '@/components/InteractionButtons';
 import { getCurrentUser } from '@/lib/auth';
 import { getEventInteractionContext } from '@/lib/interactions';
+import { safeHttpUrl } from '@/lib/validation';
 import {
   PARTICIPATION_TYPE_LABELS,
   PARTICIPATION_TYPE_COLORS,
@@ -32,9 +33,9 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { eventId, entryId } = await params;
   const [event, entry] = await Promise.all([getEventById(eventId), getEntryById(entryId)]);
-  if (!entry) return {};
+  if (!entry || !event || entry.eventId !== event.id) return {};
 
-  const title = `${event?.name ?? 'コスプレイベント'}に参加表明しました`;
+  const title = `${event.name}に参加表明しました`;
   const description = `${entry.displayName}さんの参加表明`;
   // R2に静的生成済みのOGP画像があればそれを使う（高速・確実）。
   // 未生成時は動的生成APIにフォールバック（updatedAtでキャッシュバスト）。
@@ -69,6 +70,8 @@ export default async function EntryDetailPage({ params }: Props) {
   ]);
 
   if (!event || !entry) notFound();
+  // URL のイベントとこの参加表明のイベントが一致しない場合は 404
+  if (entry.eventId !== event.id) notFound();
 
   const isOwner = Boolean(user && entry.userId && user.id === entry.userId);
   const cosplayPlans = getEntryPlans(entry);
@@ -245,11 +248,11 @@ export default async function EntryDetailPage({ params }: Props) {
                   {PHOTOGRAPHER_FIRST_MEET_LABELS[entry.photographerInfo.firstMeetStatus]}
                 </dd>
               </div>
-              {entry.photographerInfo.portfolioUrl && (
+              {safeHttpUrl(entry.photographerInfo.portfolioUrl) && (
                 <div className="flex gap-2">
                   <dt className="text-gray-400 shrink-0 w-20">作例</dt>
                   <dd>
-                    <a href={entry.photographerInfo.portfolioUrl} target="_blank"
+                    <a href={safeHttpUrl(entry.photographerInfo.portfolioUrl)!} target="_blank"
                       rel="noopener noreferrer"
                       className="text-violet-600 hover:underline text-sm break-all">
                       {entry.photographerInfo.portfolioUrl}
