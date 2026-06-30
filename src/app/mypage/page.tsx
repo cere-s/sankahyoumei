@@ -1,7 +1,10 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { getEntriesByUserId } from '@/lib/entries';
-import { getEventsByIds } from '@/lib/events';
+import { getEventsByIds, getEventsByCreator } from '@/lib/events';
 import { getCurrentAuth } from '@/lib/auth';
+import { isAdmin } from '@/lib/admin';
+import { formatDate } from '@/lib/utils';
 import { getReceivedInteractions, getSentInteractions, getBlockedUsers } from '@/lib/interactions';
 import { EntryCard } from '@/components/EntryCard';
 import { InteractionInbox } from '@/components/InteractionInbox';
@@ -33,11 +36,12 @@ export default async function MyPage() {
     );
   }
 
-  const [entries, received, sent, blocked] = await Promise.all([
+  const [entries, received, sent, blocked, myEvents] = await Promise.all([
     getEntriesByUserId(user.id),
     getReceivedInteractions(user.id).catch(() => []),
     getSentInteractions(user.id).catch(() => []),
     getBlockedUsers(user.id).catch(() => []),
+    getEventsByCreator(user.id).catch(() => []),
   ]);
 
   // 参加表明に紐づくイベントを1クエリでまとめて取得（N+1回避）
@@ -72,6 +76,44 @@ export default async function MyPage() {
           )}
         </div>
       </div>
+
+      {/* 運営メニュー */}
+      {isAdmin(user.id) && (
+        <div className="mb-6">
+          <Link
+            href="/admin/events"
+            className="inline-flex items-center gap-1.5 text-sm bg-gray-900 text-white rounded-xl px-4 py-2.5 font-bold hover:bg-gray-700 transition-colors"
+          >
+            イベント確認（運営）
+          </Link>
+        </div>
+      )}
+
+      {/* 登録したイベント */}
+      {myEvents.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-base font-bold text-gray-800 mb-3">登録したイベント</h2>
+          <div className="space-y-2">
+            {myEvents.map((ev) => (
+              <Link
+                key={ev.id}
+                href={`/events/${ev.id}`}
+                className="flex items-center justify-between gap-3 bg-white rounded-xl border border-gray-100 shadow-sm p-3.5 hover:border-violet-200 transition-colors"
+              >
+                <div className="min-w-0">
+                  <p className="font-bold text-gray-900 text-sm line-clamp-1">{ev.name}</p>
+                  <p className="text-xs text-gray-500">{formatDate(ev.date)}・{ev.location}</p>
+                </div>
+                {ev.status === 'pending' ? (
+                  <span className="shrink-0 text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold">運営確認待ち</span>
+                ) : (
+                  <span className="shrink-0 text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded font-bold">公開中</span>
+                )}
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 交流（届いた・送った・ブロック中） */}
       <InteractionInbox received={received} sent={sent} blocked={blocked} />

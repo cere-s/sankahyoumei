@@ -22,9 +22,16 @@ CREATE TABLE IF NOT EXISTS events (
   address      TEXT,
   x_url        TEXT,
   region       TEXT,
+  -- ユーザー登録イベント（仮登録→運営確認→本登録）
+  status       TEXT NOT NULL DEFAULT 'published'
+    CHECK (status IN ('pending', 'published', 'removed')),
+  created_by   UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   created_at  TIMESTAMPTZ DEFAULT NOW(),
   updated_at  TIMESTAMPTZ DEFAULT NOW()
 );
+
+CREATE INDEX IF NOT EXISTS idx_events_status     ON events(status);
+CREATE INDEX IF NOT EXISTS idx_events_created_by ON events(created_by);
 
 -- 重複登録防止ユニーク制約
 ALTER TABLE events
@@ -127,10 +134,16 @@ CREATE TRIGGER trg_entries_updated_at
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE participation_entries ENABLE ROW LEVEL SECURITY;
 
--- events: 全員が読み取り可能
+-- events: removed 以外は全員が読み取り可能（pending も表示する）
 CREATE POLICY "events_public_select"
   ON events FOR SELECT
-  USING (true);
+  USING (status <> 'removed');
+
+-- events: ログインユーザーは自分名義の仮登録イベントを作成可能
+CREATE POLICY "events_user_insert"
+  ON events FOR INSERT
+  TO authenticated
+  WITH CHECK ((SELECT auth.uid()) = created_by AND status = 'pending');
 
 -- participation_entries: 非非表示行は全員が読み取り可能
 CREATE POLICY "entries_public_select"

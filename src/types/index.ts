@@ -21,6 +21,9 @@ export type PhotographerShootingStyle =
   | 'recreation'
   | 'social';
 
+/** イベントの公開状態（ユーザー登録イベントの確認フロー用） */
+export type EventStatus = 'pending' | 'published' | 'removed';
+
 export interface Event {
   id: string;
   name: string;
@@ -36,6 +39,10 @@ export interface Event {
   address?: string;
   xUrl?: string;
   region?: string;
+  /** 'pending'=運営確認待ち / 'published'=確認済み（既定） */
+  status?: EventStatus;
+  /** 登録したXログインユーザーのID（あればユーザー投稿） */
+  createdBy?: string;
 }
 
 export interface CosplayInfo {

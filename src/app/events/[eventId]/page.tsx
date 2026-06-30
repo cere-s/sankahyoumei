@@ -6,16 +6,19 @@ import { getEventInteractionContext } from '@/lib/interactions';
 import { getCurrentUser } from '@/lib/auth';
 import { ParticipantList } from '@/components/ParticipantList';
 import { ParticipationNotice } from '@/components/ParticipationNotice';
+import { EventOwnerWithdraw } from '@/components/EventOwnerWithdraw';
 import { formatDate, todayISO, parseHashtags } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
 interface Props {
   params: Promise<{ eventId: string }>;
+  searchParams: Promise<{ submitted?: string }>;
 }
 
-export default async function EventDetailPage({ params }: Props) {
+export default async function EventDetailPage({ params, searchParams }: Props) {
   const { eventId } = await params;
+  const { submitted } = await searchParams;
   const [event, entries, user] = await Promise.all([
     getEventById(eventId),
     getEntriesByEventId(eventId).catch(() => []),
@@ -23,6 +26,10 @@ export default async function EventDetailPage({ params }: Props) {
   ]);
 
   if (!event) notFound();
+
+  const isPending = event.status === 'pending';
+  const isCreator = Boolean(user && event.createdBy && user.id === event.createdBy);
+  const justSubmitted = submitted === '1';
 
   const interaction = await getEventInteractionContext(eventId, user?.id ?? null).catch(
     () => ({ viewerUserId: user?.id ?? null, myIntents: {}, countsByEntry: {}, restrictedUserIds: [] })
@@ -49,6 +56,13 @@ export default async function EventDetailPage({ params }: Props) {
           ))}
           {event.isImported && (
             <span className="text-[11px] bg-amber-300/90 text-amber-900 px-2 py-0.5 rounded-full font-medium">外部取得</span>
+          )}
+          {isPending ? (
+            <span className="text-[11px] bg-amber-300/90 text-amber-900 px-2 py-0.5 rounded-full font-bold">運営確認待ち</span>
+          ) : (
+            event.createdBy && (
+              <span className="text-[11px] bg-white/20 px-2 py-0.5 rounded-full font-medium">ユーザー投稿</span>
+            )
           )}
         </div>
 
@@ -77,6 +91,29 @@ export default async function EventDetailPage({ params }: Props) {
           </Link>
         </div>
       </div>
+
+      {/* 登録直後 / 運営確認待ちの案内 */}
+      {justSubmitted && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-5">
+          <p className="text-sm font-bold text-emerald-800">イベントを登録しました 🎉</p>
+          <p className="text-xs text-emerald-700 mt-1 leading-relaxed">
+            このページはすぐに公開されています。さっそく参加表明したり、Xでシェアして仲間を集めましょう。運営が内容を確認するまでは「運営確認待ち」と表示されます。
+          </p>
+        </div>
+      )}
+      {isPending && !justSubmitted && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5">
+          <p className="text-sm font-bold text-amber-800">運営確認待ちのイベントです</p>
+          <p className="text-xs text-amber-700 mt-1 leading-relaxed">
+            ユーザーが登録した未確認のイベントです。日程・会場・参加条件は必ず公式情報をご確認ください。
+          </p>
+          {isCreator && entries.length === 0 && (
+            <div className="mt-2">
+              <EventOwnerWithdraw eventId={event.id} />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 詳細・注意（折りたたみで軽く） */}
       {(hasDetails || event.isImported) && (

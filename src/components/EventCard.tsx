@@ -34,6 +34,17 @@ export function EventCard({ event, today, count }: Props) {
                   外部取得
                 </span>
               )}
+              {event.status === 'pending' ? (
+                <span className="text-[10px] bg-amber-100 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded font-bold shrink-0">
+                  運営確認待ち
+                </span>
+              ) : (
+                event.createdBy && (
+                  <span className="text-[10px] bg-violet-50 text-violet-700 border border-violet-200 px-1.5 py-0.5 rounded font-medium shrink-0">
+                    ユーザー投稿
+                  </span>
+                )
+              )}
             </div>
             <p className="text-sm text-gray-500 mt-0.5">{formatDate(event.date)}</p>
             <p className="text-sm text-gray-500">{event.location}</p>
