@@ -89,6 +89,10 @@ export function EventSubmitForm() {
       setError('イベント名・開催日・会場は必須です');
       return;
     }
+    if (!f.officialUrl.trim() && !f.xUrl.trim()) {
+      setError('公式サイトURL か 公式XのURL のどちらかは必須です');
+      return;
+    }
     submit(false);
   }
 
@@ -172,17 +176,20 @@ export function EventSubmitForm() {
           placeholder="例：東京ビッグサイト" maxLength={100} required />
       </div>
 
-      <div>
-        <label className={labelClass}>公式サイトURL</label>
-        <input type="url" className={inputClass} value={f.officialUrl} onChange={(e) => set('officialUrl', e.target.value)}
-          placeholder="https://..." />
-        <p className="text-xs text-gray-400 mt-1">公式情報があると参加者が安心できます。</p>
-      </div>
-
-      <div>
-        <label className={labelClass}>公式XのURL</label>
-        <input type="url" className={inputClass} value={f.xUrl} onChange={(e) => set('xUrl', e.target.value)}
-          placeholder="https://x.com/..." />
+      <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3 space-y-3">
+        <p className="text-xs text-gray-500">
+          実在確認のため、<span className="font-bold text-gray-700">公式サイト か 公式X のどちらか</span>は必須です。
+        </p>
+        <div>
+          <label className={labelClass}>公式サイトURL</label>
+          <input type="url" className={inputClass} value={f.officialUrl} onChange={(e) => set('officialUrl', e.target.value)}
+            placeholder="https://..." />
+        </div>
+        <div>
+          <label className={labelClass}>公式XのURL</label>
+          <input type="url" className={inputClass} value={f.xUrl} onChange={(e) => set('xUrl', e.target.value)}
+            placeholder="https://x.com/..." />
+        </div>
       </div>
 
       <div>

@@ -26,10 +26,18 @@ export async function POST(request: NextRequest) {
   const name = String(body.name ?? '').trim();
   const date = String(body.date ?? '').trim();
   const location = String(body.location ?? '').trim();
+  const officialUrl = String(body.officialUrl ?? '').trim();
+  const xUrl = String(body.xUrl ?? '').trim();
   const force = body.force === true;
 
   if (!name || !date || !location) {
     return NextResponse.json({ error: 'イベント名・開催日・会場は必須です' }, { status: 400 });
+  }
+  if (!officialUrl && !xUrl) {
+    return NextResponse.json(
+      { error: '公式サイトURL か 公式XのURL のどちらかは必須です' },
+      { status: 400 }
+    );
   }
   if (!DATE_RE.test(date)) {
     return NextResponse.json({ error: '開催日の形式が正しくありません' }, { status: 400 });
@@ -59,8 +67,8 @@ export async function POST(request: NextRequest) {
         date,
         location,
         region: body.region ? String(body.region).trim() : undefined,
-        officialUrl: body.officialUrl ? String(body.officialUrl).trim() : undefined,
-        xUrl: body.xUrl ? String(body.xUrl).trim() : undefined,
+        officialUrl: officialUrl || undefined,
+        xUrl: xUrl || undefined,
         hashtag: body.hashtag ? String(body.hashtag).trim() : undefined,
         description: body.description ? String(body.description).trim() : undefined,
         organizer: body.organizer ? String(body.organizer).trim() : undefined,
