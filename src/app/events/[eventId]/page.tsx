@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getEventById } from '@/lib/events';
@@ -14,6 +15,33 @@ export const dynamic = 'force-dynamic';
 interface Props {
   params: Promise<{ eventId: string }>;
   searchParams: Promise<{ submitted?: string }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { eventId } = await params;
+  const event = await getEventById(eventId);
+  if (!event) return {};
+
+  const title = event.name;
+  const description = `${formatDate(event.date)}${event.location ? `・${event.location}` : ''} の参加表明をチェック・登録できます`;
+  const ogImage = `/api/og/event?id=${event.id}`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'article',
+      images: [{ url: ogImage, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogImage],
+    },
+  };
 }
 
 export default async function EventDetailPage({ params, searchParams }: Props) {

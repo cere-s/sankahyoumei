@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 import type { Event, ParticipationEntry } from '@/types';
-import { formatDate, PARTICIPATION_TYPE_LABELS, COSPLAY_SHOOTING_STATUS_LABELS } from './utils';
+import { formatDate, parseHashtags, PARTICIPATION_TYPE_LABELS, COSPLAY_SHOOTING_STATUS_LABELS } from './utils';
 import { getEntryById } from './entries';
 import { setEntryOgImage } from './entries';
 import { getEventById } from './events';
@@ -119,6 +119,68 @@ export async function buildOgImageResponse(
               <div style={{ display: 'flex', fontSize: 22, color: '#6d28d9', marginTop: 14, padding: '0 24px', textAlign: 'center' }}>イベント前に、誰が来るか見える。</div>
             </div>
           )}
+        </div>
+      </div>
+    ),
+    { width: W, height: H, fonts: [{ name: 'NotoSansJP', data: font, weight: 700, style: 'normal' }], headers: IMAGE_HEADERS }
+  );
+}
+
+/** イベントのOGP画像（ImageResponse）を生成。event が無ければテンプレ画像 */
+export async function buildEventOgImageResponse(event: Event | null): Promise<ImageResponse> {
+  if (!event) {
+    const font = await loadJpFont(`${SERVICE}${SITE_TEXT}イベント前に誰が来るか見える参加表明`);
+    return new ImageResponse(
+      (
+        <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg,#7c3aed,#38bdf8)', color: '#fff', fontFamily: 'NotoSansJP' }}>
+          <div style={{ display: 'flex', fontSize: 64 }}>{SERVICE}</div>
+          <div style={{ display: 'flex', fontSize: 28, marginTop: 16, opacity: 0.92 }}>イベント前に、誰が来るか見える。</div>
+        </div>
+      ),
+      { width: W, height: H, fonts: [{ name: 'NotoSansJP', data: font, weight: 700, style: 'normal' }], headers: IMAGE_HEADERS }
+    );
+  }
+
+  const eventName = clip(event.name, 44);
+  const dateStr = formatDate(event.date);
+  const region = event.region ?? '';
+  const location = clip(event.location, 22);
+  const tags = parseHashtags(event.hashtag).slice(0, 3);
+
+  const allText =
+    SERVICE + SITE_TEXT + eventName + dateStr + region + location + tags.join('') +
+    '開催日会場参加表明イベント前に誰が来るか見える。コスプレで参加表明する人を集めよう';
+  const font = await loadJpFont(allText);
+
+  return new ImageResponse(
+    (
+      <div style={{ width: '100%', height: '100%', display: 'flex', background: '#ffffff', fontFamily: 'NotoSansJP' }}>
+        {/* 左：イベント情報 */}
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '720px', height: '100%', padding: '52px 48px' }}>
+          <div style={{ display: 'flex' }}>
+            <div style={{ display: 'flex', background: '#7c3aed', color: '#fff', fontSize: 22, padding: '6px 18px', borderRadius: 999 }}>{SERVICE}</div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', fontSize: 52, color: '#111827', lineHeight: 1.25 }}>{eventName}</div>
+            <div style={{ display: 'flex', alignItems: 'center', marginTop: 24, fontSize: 26, color: '#4b5563' }}>
+              <div style={{ display: 'flex' }}>{dateStr}</div>
+              {region ? <div style={{ display: 'flex', marginLeft: 16, background: '#ede9fe', color: '#6d28d9', fontSize: 22, padding: '4px 14px', borderRadius: 999 }}>{region}</div> : null}
+            </div>
+            <div style={{ display: 'flex', marginTop: 10, fontSize: 26, color: '#6b7280' }}>{location}</div>
+            {tags.length > 0 ? (
+              <div style={{ display: 'flex', marginTop: 18 }}>
+                {tags.map((t) => (
+                  <div key={t} style={{ display: 'flex', background: '#f5f3ff', color: '#7c3aed', fontSize: 20, padding: '5px 14px', borderRadius: 999, marginRight: 8 }}>#{t}</div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+          <div style={{ display: 'flex', fontSize: 20, color: '#c4b5fd' }}>{SITE_TEXT}</div>
+        </div>
+        {/* 右：ブランドパネル */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '480px', height: '100%', background: 'linear-gradient(135deg,#ede9fe,#cffafe)' }}>
+          <div style={{ display: 'flex', fontSize: 44, color: '#7c3aed' }}>参加表明</div>
+          <div style={{ display: 'flex', fontSize: 22, color: '#6d28d9', marginTop: 14, padding: '0 28px', textAlign: 'center' }}>イベント前に、誰が来るか見える。</div>
         </div>
       </div>
     ),
