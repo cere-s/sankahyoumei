@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import type { ParticipationEntry } from '@/types';
-import { EntryCard } from './EntryCard';
+import type { ParticipationEntry, EventInteractionContext } from '@/types';
+import { EntryCard, type EntryInteraction } from './EntryCard';
 import {
   getEntryPlans,
   computeEventStats,
@@ -14,6 +14,8 @@ import {
 interface Props {
   entries: ParticipationEntry[];
   eventId: string;
+  /** 意思表示ボタン用の閲覧者コンテキスト */
+  interaction?: EventInteractionContext;
 }
 
 type Quick = 'all' | 'cosplay' | 'photographer' | 'shooting_ok' | 'greeting';
@@ -38,13 +40,27 @@ function StatCell({ value, label, color }: { value: number; label: string; color
   );
 }
 
-export function ParticipantList({ entries, eventId }: Props) {
+export function ParticipantList({ entries, eventId, interaction }: Props) {
   const [quick, setQuick] = useState<Quick>('all');
   const [keyword, setKeyword] = useState('');
   const [activeTag, setActiveTag] = useState<ActiveTag>(null);
 
   const stats = useMemo(() => computeEventStats(entries), [entries]);
   const tags = useMemo(() => computePopularTags(entries), [entries]);
+
+  const restrictedSet = useMemo(
+    () => new Set(interaction?.restrictedUserIds ?? []),
+    [interaction]
+  );
+  const entryInteraction = (entry: ParticipationEntry): EntryInteraction | undefined => {
+    if (!interaction) return undefined;
+    return {
+      viewerUserId: interaction.viewerUserId,
+      selected: interaction.myIntents[entry.id] ?? [],
+      counts: interaction.countsByEntry[entry.id] ?? {},
+      restricted: Boolean(entry.userId && restrictedSet.has(entry.userId)),
+    };
+  };
 
   const filtered = useMemo(() => {
     const kw = keyword.trim().toLowerCase();
@@ -198,7 +214,12 @@ export function ParticipantList({ entries, eventId }: Props) {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {filtered.map((entry) => (
-            <EntryCard key={entry.id} entry={entry} eventId={eventId} />
+            <EntryCard
+              key={entry.id}
+              entry={entry}
+              eventId={eventId}
+              interaction={entryInteraction(entry)}
+            />
           ))}
         </div>
       )}

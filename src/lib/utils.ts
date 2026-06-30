@@ -10,7 +10,32 @@ import type {
   TimeBand,
   GreetingLevel,
   ShootingPolicy,
+  InteractionType,
 } from '@/types';
+
+/** 意思表示ボタンのラベル（未選択時） */
+export const INTERACTION_LABELS: Record<InteractionType, string> = {
+  want_to_shoot: '撮りたい',
+  want_to_be_shot: '撮られたい',
+  want_to_meet: '交流したい',
+};
+
+/** 意思表示ボタンのラベル（選択済み） */
+export const INTERACTION_DONE_LABELS: Record<InteractionType, string> = {
+  want_to_shoot: '撮りたい済み',
+  want_to_be_shot: '撮られたい済み',
+  want_to_meet: '交流したい済み',
+};
+
+export const INTERACTION_TYPES: InteractionType[] = [
+  'want_to_shoot',
+  'want_to_be_shot',
+  'want_to_meet',
+];
+
+export function isInteractionType(v: unknown): v is InteractionType {
+  return v === 'want_to_shoot' || v === 'want_to_be_shot' || v === 'want_to_meet';
+}
 
 export const PARTICIPATION_TYPE_LABELS: Record<ParticipationType, string> = {
   cosplay: 'コスプレ',

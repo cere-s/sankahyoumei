@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getEventById } from '@/lib/events';
 import { getEntriesByEventId } from '@/lib/entries';
+import { getEventInteractionContext } from '@/lib/interactions';
+import { getCurrentUser } from '@/lib/auth';
 import { ParticipantList } from '@/components/ParticipantList';
 import { ParticipationNotice } from '@/components/ParticipationNotice';
 import { formatDate, todayISO, parseHashtags } from '@/lib/utils';
@@ -14,12 +16,17 @@ interface Props {
 
 export default async function EventDetailPage({ params }: Props) {
   const { eventId } = await params;
-  const [event, entries] = await Promise.all([
+  const [event, entries, user] = await Promise.all([
     getEventById(eventId),
     getEntriesByEventId(eventId).catch(() => []),
+    getCurrentUser(),
   ]);
 
   if (!event) notFound();
+
+  const interaction = await getEventInteractionContext(eventId, user?.id ?? null).catch(
+    () => ({ viewerUserId: user?.id ?? null, myIntents: {}, countsByEntry: {}, restrictedUserIds: [] })
+  );
 
   const hasDetails = Boolean(
     event.organizer || event.address || event.officialUrl || event.xUrl || (event.isImported && event.sourceUrl)
@@ -113,7 +120,7 @@ export default async function EventDetailPage({ params }: Props) {
 
       <ParticipationNotice className="mb-4" />
 
-      <ParticipantList entries={entries} eventId={eventId} />
+      <ParticipantList entries={entries} eventId={eventId} interaction={interaction} />
     </div>
   );
 }

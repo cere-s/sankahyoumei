@@ -189,3 +189,60 @@ CREATE POLICY "profiles_owner_update"
   TO authenticated
   USING ((SELECT auth.uid()) = id)
   WITH CHECK ((SELECT auth.uid()) = id);
+
+-- ============================================================
+-- ユーザー同士の軽い交流（意思表示）機能
+-- 詳細は add_interactions.sql を参照。書き込み・読み取りは service_role 経由。
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS interaction_intents (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_id      UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  from_user_id  UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  to_user_id    UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  to_entry_id   UUID NOT NULL REFERENCES participation_entries(id) ON DELETE CASCADE,
+  intent_type   TEXT NOT NULL
+    CHECK (intent_type IN ('want_to_shoot', 'want_to_be_shot', 'want_to_meet')),
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (from_user_id, to_entry_id, intent_type)
+);
+
+CREATE INDEX IF NOT EXISTS idx_intents_to_user   ON interaction_intents(to_user_id);
+CREATE INDEX IF NOT EXISTS idx_intents_from_user ON interaction_intents(from_user_id);
+CREATE INDEX IF NOT EXISTS idx_intents_event     ON interaction_intents(event_id);
+CREATE INDEX IF NOT EXISTS idx_intents_to_entry  ON interaction_intents(to_entry_id);
+
+CREATE TABLE IF NOT EXISTS interaction_hides (
+  id                     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id                UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  interaction_intent_id  UUID NOT NULL REFERENCES interaction_intents(id) ON DELETE CASCADE,
+  created_at             TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (user_id, interaction_intent_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_hides_user ON interaction_hides(user_id);
+
+CREATE TABLE IF NOT EXISTS user_blocks (
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  blocker_user_id  UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  blocked_user_id  UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  event_id         UUID REFERENCES events(id) ON DELETE CASCADE,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (blocker_user_id, blocked_user_id, event_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_blocks_blocker ON user_blocks(blocker_user_id);
+CREATE INDEX IF NOT EXISTS idx_blocks_blocked ON user_blocks(blocked_user_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS user_blocks_global_unique
+  ON user_blocks(blocker_user_id, blocked_user_id)
+  WHERE event_id IS NULL;
+
+CREATE TRIGGER trg_intents_updated_at
+  BEFORE UPDATE ON interaction_intents
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+ALTER TABLE interaction_intents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE interaction_hides    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_blocks          ENABLE ROW LEVEL SECURITY;

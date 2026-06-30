@@ -9,7 +9,9 @@ import { TweetEmbed } from '@/components/TweetEmbed';
 import { AuthStatusNotice } from '@/components/AuthStatus';
 import { ParticipationNotice } from '@/components/ParticipationNotice';
 import { OwnerEntryActions } from '@/components/OwnerEntryActions';
+import { InteractionButtons } from '@/components/InteractionButtons';
 import { getCurrentUser } from '@/lib/auth';
+import { getEventInteractionContext } from '@/lib/interactions';
 import {
   PARTICIPATION_TYPE_LABELS,
   PARTICIPATION_TYPE_COLORS,
@@ -71,6 +73,12 @@ export default async function EntryDetailPage({ params }: Props) {
   const isOwner = Boolean(user && entry.userId && user.id === entry.userId);
   const cosplayPlans = getEntryPlans(entry);
 
+  // 意思表示ボタン用のコンテキスト（イベント単位で取得し、この参加表明の分を使う）
+  const interaction = await getEventInteractionContext(event.id, user?.id ?? null).catch(() => null);
+  const restricted = Boolean(
+    entry.userId && interaction?.restrictedUserIds.includes(entry.userId)
+  );
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
       <div className="flex items-center gap-2 mb-6">
@@ -114,6 +122,20 @@ export default async function EntryDetailPage({ params }: Props) {
         {entry.authStatus !== 'verified_x' && (
           <div className="mb-4">
             <AuthStatusNotice status={entry.authStatus} />
+          </div>
+        )}
+
+        {/* 軽い交流：撮りたい / 撮られたい / 交流したい */}
+        {entry.userId && (
+          <div className="mb-4">
+            <InteractionButtons
+              toEntryId={entry.id}
+              toUserId={entry.userId}
+              viewerUserId={user?.id ?? null}
+              initialSelected={interaction?.myIntents[entry.id] ?? []}
+              counts={interaction?.countsByEntry[entry.id] ?? {}}
+              restricted={restricted}
+            />
           </div>
         )}
 

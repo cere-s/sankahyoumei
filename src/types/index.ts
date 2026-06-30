@@ -131,6 +131,57 @@ export interface ParticipationEntry {
   updatedAt?: string;
 }
 
+// ============================================================
+// ユーザー同士の軽い交流（意思表示）
+// ============================================================
+
+/** 意思表示の種類 */
+export type InteractionType = 'want_to_shoot' | 'want_to_be_shot' | 'want_to_meet';
+
+/** 交流相手の公開プロフィール（Xユーザー名が無い場合は連絡導線を出さない） */
+export interface InteractionParty {
+  userId: string;
+  xUsername?: string;
+  displayName?: string;
+  avatarUrl?: string;
+}
+
+/** 自分に届いた意思表示（一覧表示用に相手・イベント情報を含む） */
+export interface ReceivedInteraction {
+  id: string;
+  intentType: InteractionType;
+  createdAt: string;
+  from: InteractionParty;
+  eventId: string;
+  eventName?: string;
+  toEntryId: string;
+}
+
+/** 自分が送った意思表示（相手・イベント情報を含む） */
+export interface SentInteraction {
+  id: string;
+  intentType: InteractionType;
+  createdAt: string;
+  to: InteractionParty;
+  eventId: string;
+  eventName?: string;
+  toEntryId: string;
+}
+
+/**
+ * イベント参加者一覧で意思表示ボタンを描画するための、閲覧者ごとの状態。
+ * - viewerUserId: 未ログインなら null
+ * - myIntents: 自分が送信済みの意思表示（参加表明ID → 種別配列）
+ * - countsByEntry: 参加表明ごとの受信数（第三者には人数のみ見せる。ブロック分は除外済み）
+ * - restrictedUserIds: 自分が関与するブロック相手（双方向）。この相手には意思表示できない
+ */
+export interface EventInteractionContext {
+  viewerUserId: string | null;
+  myIntents: Record<string, InteractionType[]>;
+  countsByEntry: Record<string, Partial<Record<InteractionType, number>>>;
+  restrictedUserIds: string[];
+}
+
 /** 参加表明作成APIのレスポンス */
 export interface CreateEntryResult {
   entry: ParticipationEntry;

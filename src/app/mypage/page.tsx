@@ -2,7 +2,9 @@ import type { Metadata } from 'next';
 import { getEntriesByUserId } from '@/lib/entries';
 import { getEventsByIds } from '@/lib/events';
 import { getCurrentAuth } from '@/lib/auth';
+import { getReceivedInteractions, getSentInteractions, getBlockedUsers } from '@/lib/interactions';
 import { EntryCard } from '@/components/EntryCard';
+import { InteractionInbox } from '@/components/InteractionInbox';
 import { XLoginButton } from '@/components/auth/XLoginButton';
 import { ParticipatingEventsExport, type ExportEvent } from '@/components/ParticipatingEventsExport';
 
@@ -31,7 +33,12 @@ export default async function MyPage() {
     );
   }
 
-  const entries = await getEntriesByUserId(user.id);
+  const [entries, received, sent, blocked] = await Promise.all([
+    getEntriesByUserId(user.id),
+    getReceivedInteractions(user.id).catch(() => []),
+    getSentInteractions(user.id).catch(() => []),
+    getBlockedUsers(user.id).catch(() => []),
+  ]);
 
   // 参加表明に紐づくイベントを1クエリでまとめて取得（N+1回避）
   const eventMap = await getEventsByIds(entries.map((e) => e.eventId));
@@ -65,6 +72,9 @@ export default async function MyPage() {
           )}
         </div>
       </div>
+
+      {/* 交流（届いた・送った・ブロック中） */}
+      <InteractionInbox received={received} sent={sent} blocked={blocked} />
 
       {/* 参加イベント一覧の出力 */}
       <div className="mb-6">

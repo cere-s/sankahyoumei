@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import type { ParticipationEntry } from '@/types';
+import type { ParticipationEntry, InteractionType } from '@/types';
 import { AuthStatusBadge } from './AuthStatus';
+import { InteractionButtons } from './InteractionButtons';
 import {
   PARTICIPATION_TYPE_LABELS,
   PARTICIPATION_TYPE_COLORS,
@@ -20,13 +21,23 @@ import {
   getTimeBand,
 } from '@/lib/utils';
 
+/** 意思表示ボタン用の閲覧者コンテキスト（カードごと） */
+export interface EntryInteraction {
+  viewerUserId: string | null;
+  selected: InteractionType[];
+  counts: Partial<Record<InteractionType, number>>;
+  restricted: boolean;
+}
+
 interface Props {
   entry: ParticipationEntry;
   eventId: string;
   eventName?: string;
+  /** 渡された場合のみ意思表示ボタンを表示する */
+  interaction?: EntryInteraction;
 }
 
-export function EntryCard({ entry, eventId, eventName }: Props) {
+export function EntryCard({ entry, eventId, eventName, interaction }: Props) {
   const plans = getEntryPlans(entry);
   const targets = getEntryTargets(entry);
   const greeting = getGreetingLevel(entry);
@@ -180,6 +191,21 @@ export function EntryCard({ entry, eventId, eventName }: Props) {
 
           {entry.comment && (
             <p className="mt-3 text-sm text-gray-600 leading-relaxed line-clamp-3">{entry.comment}</p>
+          )}
+
+          {/* 軽い交流：撮りたい / 撮られたい / 交流したい */}
+          {interaction && (
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <InteractionButtons
+                toEntryId={entry.id}
+                toUserId={entry.userId}
+                viewerUserId={interaction.viewerUserId}
+                initialSelected={interaction.selected}
+                counts={interaction.counts}
+                restricted={interaction.restricted}
+                insideLink
+              />
+            </div>
           )}
 
           <div className="mt-auto pt-3 flex justify-end">
