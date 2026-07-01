@@ -49,24 +49,23 @@ export default async function TopPage() {
     <div>
       {/* Hero */}
       <SectionView eventName="home_hero_view">
-        <section className="relative overflow-hidden bg-gradient-to-br from-pink-100 via-purple-50 to-violet-50 px-4 py-10 sm:py-14">
+        <section className="px-4 py-8 sm:py-10">
           <div className="max-w-2xl mx-auto text-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-mark.png" alt="コスいく" className="w-20 h-20 mx-auto mb-4 drop-shadow-sm" />
-            <h1 className="text-3xl sm:text-4xl font-bold leading-tight mb-2">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-violet-500">コスいく</span>
-            </h1>
-            <p className="text-pink-600 text-sm font-medium mb-5">★ 好きでつながる、コスプレ参加表明サイト ★</p>
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 leading-snug mb-3">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-snug mb-3">
               次のイベント、
               <br className="sm:hidden" />
               誰が来るか先に見える。
-            </h2>
-            <p className="text-gray-600 text-sm sm:text-base leading-relaxed mb-7">
+            </h1>
+            <p className="text-gray-600 text-sm sm:text-base leading-relaxed mb-4">
               コスプレ・カメラマンの参加表明を一覧でチェック。
               <br />
               誰がどの作品・キャラで来るかが、当日より前に分かります。
             </p>
+            <div className="flex items-center justify-center gap-5 mb-5 text-sm text-gray-600">
+              <span><span className="font-bold text-lg text-gray-900">{upcomingAll.length}</span> 開催予定</span>
+              <span className="w-px h-3 bg-gray-300" />
+              <span><span className="font-bold text-lg text-gray-900">{totalEntries}</span> 参加表明</span>
+            </div>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href="/events"
                 className="bg-gradient-to-r from-pink-500 to-violet-500 text-white px-7 py-3 rounded-xl font-bold text-sm shadow-sm hover:opacity-90 active:opacity-100 transition-opacity">
@@ -76,11 +75,6 @@ export default async function TopPage() {
                 className="bg-white text-violet-700 border border-violet-200 px-7 py-3 rounded-xl font-bold text-sm hover:bg-violet-50 transition-colors">
                 参加表明する
               </Link>
-            </div>
-            <div className="flex items-center justify-center gap-5 mt-6 text-xs text-gray-500">
-              <span><span className="font-bold text-gray-800">{upcomingAll.length}</span> 開催予定</span>
-              <span className="w-px h-3 bg-gray-300" />
-              <span><span className="font-bold text-gray-800">{totalEntries}</span> 参加表明</span>
             </div>
           </div>
         </section>
