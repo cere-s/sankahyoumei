@@ -146,7 +146,7 @@ export function EntryCard({ entry, eventId, eventName, interaction }: Props) {
                 <div className="flex gap-2 text-sm">
                   <span className="text-gray-400 text-xs w-14 shrink-0 pt-0.5">撮りたい</span>
                   <span className="text-gray-800 line-clamp-1">
-                    {targets[0].workTitle}{targets[0].characterName ? ` / ${targets[0].characterName}` : ''}
+                    {[targets[0].workTitle, targets[0].characterName].filter(Boolean).join(' / ')}
                   </span>
                 </div>
               ) : (
@@ -156,7 +156,7 @@ export function EntryCard({ entry, eventId, eventName, interaction }: Props) {
                     {targets.map((t, i) => (
                       <li key={i} className="text-sm flex gap-2">
                         <span className="shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-[11px] font-bold">{i + 1}</span>
-                        <span className="text-gray-800 line-clamp-1">{t.workTitle}{t.characterName ? ` / ${t.characterName}` : ''}</span>
+                        <span className="text-gray-800 line-clamp-1">{[t.workTitle, t.characterName].filter(Boolean).join(' / ')}</span>
                       </li>
                     ))}
                   </ol>

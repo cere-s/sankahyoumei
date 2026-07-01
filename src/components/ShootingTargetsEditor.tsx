@@ -22,10 +22,9 @@ interface Props {
   targets: TargetDraft[];
   onChange: (targets: TargetDraft[]) => void;
   suggestions: CosplaySuggestions;
-  showErrors?: boolean;
 }
 
-export function ShootingTargetsEditor({ targets, onChange, suggestions, showErrors }: Props) {
+export function ShootingTargetsEditor({ targets, onChange, suggestions }: Props) {
   const update = (i: number, patch: Partial<TargetDraft>) =>
     onChange(targets.map((t, idx) => (idx === i ? { ...t, ...patch } : t)));
   const add = () => onChange([...targets, emptyTarget()]);
@@ -46,7 +45,6 @@ export function ShootingTargetsEditor({ targets, onChange, suggestions, showErro
       </div>
 
       {targets.map((t, i) => {
-        const workMissing = showErrors && !t.workTitle.trim();
         return (
           <div key={i} className="rounded-xl border border-blue-100 bg-white p-3 space-y-2.5">
             <div className="flex items-center justify-between">
@@ -65,13 +63,9 @@ export function ShootingTargetsEditor({ targets, onChange, suggestions, showErro
               </div>
             </div>
 
-            <div>
-              <input type="text" value={t.workTitle} onChange={(e) => update(i, { workTitle: e.target.value })}
-                list="work-suggestions" autoComplete="off" maxLength={100}
-                placeholder="作品名（必須）例：原神"
-                className={`${inputClass} ${workMissing ? 'border-red-300' : ''}`} />
-              {workMissing && <p className="text-xs text-red-500 mt-1">作品名を入力してください</p>}
-            </div>
+            <input type="text" value={t.workTitle} onChange={(e) => update(i, { workTitle: e.target.value })}
+              list="work-suggestions" autoComplete="off" maxLength={100}
+              placeholder="作品名（任意）例：原神" className={inputClass} />
 
             <input type="text" value={t.characterName} onChange={(e) => update(i, { characterName: e.target.value })}
               list="character-suggestions-all" autoComplete="off" maxLength={100}

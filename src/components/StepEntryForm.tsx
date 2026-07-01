@@ -184,7 +184,8 @@ export function StepEntryForm({ eventId, eventName, eventHashtag, eventDate, sug
   const cleanTargets = () =>
     form.targets
       .map((t) => ({ workTitle: t.workTitle.trim(), characterName: t.characterName.trim(), timeSlot: t.timeSlot.trim(), memo: t.memo.trim() }))
-      .filter((t) => t.workTitle);
+      // 作品名は任意。キャラ名だけの行も有効なターゲットとして扱う
+      .filter((t) => t.workTitle || t.characterName);
 
   function validateStep(s: number): string {
     if (s === 2 && !form.displayName.trim()) return '表示名を入力してください';
@@ -192,10 +193,6 @@ export function StepEntryForm({ eventId, eventName, eventHashtag, eventDate, sug
       if (form.participationType === 'cosplay') {
         const p = cleanPlans();
         if (p.length === 0 || p.some((x) => !x.workTitle || !x.characterName)) return '各予定の作品名・キャラ名を入力してください';
-      }
-      if (form.participationType === 'photographer') {
-        const t = cleanTargets();
-        if (t.length === 0) return '撮りたい作品を1件以上入力してください';
       }
     }
     return '';
@@ -432,7 +429,7 @@ export function StepEntryForm({ eventId, eventName, eventHashtag, eventDate, sug
             <CosplayPlansEditor plans={form.plans} onChange={(plans) => update({ plans })} suggestions={suggestions} showErrors={showErr} />
           )}
           {form.participationType === 'photographer' && (
-            <ShootingTargetsEditor targets={form.targets} onChange={(targets) => update({ targets })} suggestions={suggestions} showErrors={showErr} />
+            <ShootingTargetsEditor targets={form.targets} onChange={(targets) => update({ targets })} suggestions={suggestions} />
           )}
           {(form.participationType === 'general' || form.participationType === 'undecided') && (
             <div className="space-y-3">
@@ -550,7 +547,7 @@ export function StepEntryForm({ eventId, eventName, eventHashtag, eventDate, sug
                   {cleanTargets().map((t, i) => (
                     <li key={i} className="text-sm text-gray-700">
                       <span className="text-blue-500 font-bold mr-1">{i + 1}.</span>
-                      {t.workTitle}{t.characterName ? ` / ${t.characterName}` : ''}
+                      {[t.workTitle, t.characterName].filter(Boolean).join(' / ')}
                       {t.timeSlot && <span className="text-xs text-gray-400 ml-1">（{t.timeSlot}）</span>}
                     </li>
                   ))}

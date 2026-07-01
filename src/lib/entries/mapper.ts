@@ -97,7 +97,8 @@ export function parseTargets(raw: unknown, targetWorks: string | null): Shooting
           memo: o.memo ? String(o.memo) : undefined,
         } as ShootingTarget;
       })
-      .filter((p) => p.workTitle);
+      // 作品名は任意入力のため、キャラ名だけの行も残す
+      .filter((p) => p.workTitle || p.characterName);
     if (targets.length) return targets;
   }
   if (targetWorks) return [{ workTitle: targetWorks }];

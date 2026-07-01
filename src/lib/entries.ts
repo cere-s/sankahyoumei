@@ -33,7 +33,8 @@ function cleanTargetsForStorage(targets?: ShootingTarget[]): ShootingTarget[] | 
       if (p.memo?.trim()) o.memo = p.memo.trim();
       return o;
     })
-    .filter((p) => p.workTitle);
+    // 作品名は任意。キャラ名だけの行も保存する
+    .filter((p) => p.workTitle || p.characterName);
   return cleaned.length ? cleaned : null;
 }
 

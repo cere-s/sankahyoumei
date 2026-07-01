@@ -116,6 +116,19 @@ describe('dbToEntry: photographer', () => {
     });
   });
 
+  it('作品名が空でキャラ名だけの shooting_targets も保持される（作品名は任意）', () => {
+    const entry = dbToEntry(
+      makeRow({
+        participation_type: 'photographer',
+        shooting_targets: [
+          { workTitle: '', characterName: 'キャラのみ' },
+          { workTitle: '', characterName: '' },
+        ],
+      })
+    );
+    expect(entry.shootingTargets).toEqual([{ workTitle: '', characterName: 'キャラのみ' }]);
+  });
+
   it('shooting_targets が空で photographer_target_works があれば旧形式から復元する', () => {
     const entry = dbToEntry(
       makeRow({
