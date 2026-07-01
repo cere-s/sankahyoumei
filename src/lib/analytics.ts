@@ -86,6 +86,40 @@ export async function recordAnalyticsEvents(events: AnalyticsEventInput[]): Prom
 // ============================================================
 
 const MAX_ROWS = 100_000;
+/** PostgREST の既定 max-rows。1リクエストの上限なのでこの単位でページングする。 */
+const PAGE_SIZE = 1000;
+
+/**
+ * 期間内の analytics_events を全件ページングで取得する。
+ * `.limit()` を付けても PostgREST は既定 max-rows(=1000) で頭打ちになるため、
+ * `.range()` を回して cap まで集める。
+ */
+async function queryAnalyticsRange(
+  columns: string,
+  range: { from: string; to: string },
+  cap: number
+): Promise<Record<string, unknown>[]> {
+  const admin = createAdminClient();
+  const out: Record<string, unknown>[] = [];
+  for (let offset = 0; offset < cap; offset += PAGE_SIZE) {
+    const to = Math.min(offset + PAGE_SIZE, cap) - 1;
+    const { data, error } = await admin
+      .from('analytics_events')
+      .select(columns)
+      .gte('created_at', range.from)
+      .lte('created_at', range.to)
+      .order('created_at', { ascending: false })
+      .range(offset, to);
+    if (error) {
+      console.error('analytics range query failed:', error.message);
+      break;
+    }
+    const rows = (data ?? []) as unknown as Record<string, unknown>[];
+    out.push(...rows);
+    if (rows.length < to - offset + 1) break; // 最終ページに到達
+  }
+  return out;
+}
 
 function num(v: unknown): number | null {
   return typeof v === 'number' && Number.isFinite(v) ? v : null;
@@ -144,20 +178,11 @@ export async function getAnalyticsSummary(range: { from: string; to: string }): 
   };
   if (DEMO) return empty;
 
-  const admin = createAdminClient();
-  const { data, error } = await admin
-    .from('analytics_events')
-    .select('event_name, page_path, entry_id, session_id, metadata')
-    .gte('created_at', range.from)
-    .lte('created_at', range.to)
-    .order('created_at', { ascending: false })
-    .limit(MAX_ROWS);
-
-  if (error) {
-    console.error('analytics summary query failed:', error.message);
-    return empty;
-  }
-  const rows = (data ?? []) as RawRow[];
+  const rows = (await queryAnalyticsRange(
+    'event_name, page_path, entry_id, session_id, metadata',
+    range,
+    MAX_ROWS
+  )) as unknown as RawRow[];
 
   const pageViews = new Map<string, number>();
   const eventCount = (name: string) => rows.filter((r) => r.event_name === name).length;
@@ -254,24 +279,16 @@ export interface AnalyticsExportRow {
   metadata: Record<string, unknown> | null;
 }
 
-/** 期間内の生イベントを取得する（新しい順・上限あり）。user_id は返さない。 */
+/** 期間内の生イベントを全件取得する（新しい順・cap まで）。user_id は返さない。 */
 export async function getAnalyticsRawEvents(
   range: { from: string; to: string },
   limit = 50_000
 ): Promise<AnalyticsExportRow[]> {
   if (DEMO) return [];
-  const admin = createAdminClient();
-  const { data, error } = await admin
-    .from('analytics_events')
-    .select('created_at, event_name, page_path, event_id, entry_id, session_id, metadata')
-    .gte('created_at', range.from)
-    .lte('created_at', range.to)
-    .order('created_at', { ascending: false })
-    .limit(Math.min(limit, MAX_ROWS));
-
-  if (error) {
-    console.error('analytics export query failed:', error.message);
-    return [];
-  }
-  return (data ?? []) as AnalyticsExportRow[];
+  const rows = await queryAnalyticsRange(
+    'created_at, event_name, page_path, event_id, entry_id, session_id, metadata',
+    range,
+    Math.min(limit, MAX_ROWS)
+  );
+  return rows as unknown as AnalyticsExportRow[];
 }
