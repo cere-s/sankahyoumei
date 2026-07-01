@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createEntry, getEntriesByEventId, setEntryImage } from '@/lib/entries';
 import { getEventById } from '@/lib/events';
+import { canCreateEntryForEvent } from '@/lib/event-status';
 import { getCurrentAuth } from '@/lib/auth';
 import { rateLimit, getClientIp } from '@/lib/rateLimit';
 import { validateImageFile, uploadEntryImage } from '@/lib/imageUpload';
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
 
   // 取り下げ済み／存在しないイベントには参加表明を作成させない
   const event = await getEventById(String(eventId));
-  if (!event) {
+  if (!canCreateEntryForEvent(event)) {
     return NextResponse.json({ error: 'このイベントは見つからないか、公開されていません' }, { status: 404 });
   }
 
