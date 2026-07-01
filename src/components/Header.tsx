@@ -20,9 +20,6 @@ export async function Header() {
           <Link href="/events" className="text-sm text-gray-600 hover:text-pink-500 transition-colors">
             イベント一覧
           </Link>
-          <Link href="/organizers" className="text-sm text-gray-600 hover:text-pink-500 transition-colors hidden sm:inline">
-            主催者の方へ
-          </Link>
           {user ? (
             <div className="flex items-center gap-2">
               <Link
