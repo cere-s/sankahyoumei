@@ -212,7 +212,7 @@ export function ParticipantList({ entries, eventId, interaction }: Props) {
           {hasActiveFilter ? '条件に一致する参加者がいません' : 'まだ参加表明がありません'}
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {filtered.map((entry) => (
             <EntryCard
               key={entry.id}

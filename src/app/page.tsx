@@ -114,7 +114,7 @@ export default async function TopPage() {
           {featuredEvents.length === 0 ? (
             <p className="text-sm text-gray-400 text-center py-8">開催予定のイベントはありません</p>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {featuredEvents.map(({ event, soon, popular }) => (
                 <div key={event.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
                   <div className="flex flex-wrap gap-1.5 mb-2">

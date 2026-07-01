@@ -134,7 +134,7 @@ export default async function MyPage() {
           まだ参加表明がありません。イベントページから参加表明できます。
         </p>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {entries.map((entry) => (
             <EntryCard
               key={entry.id}

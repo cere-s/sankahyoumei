@@ -165,7 +165,7 @@ export function EventsBrowser({ events, counts = {}, hasImported, today, initial
 
           {/* 開催予定 */}
           {upcomingShown.length > 0 && (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {upcomingShown.map((event) => (
                 <EventCard key={event.id} event={event} today={today} count={counts[event.id] ?? 0} />
               ))}
@@ -180,7 +180,7 @@ export function EventsBrowser({ events, counts = {}, hasImported, today, initial
                 <span className="text-xs text-gray-400">{sorted.past.length}件</span>
                 <span className="flex-1 h-px bg-gray-200" />
               </div>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {pastShown.map((event) => (
                   <EventCard key={event.id} event={event} today={today} count={counts[event.id] ?? 0} />
                 ))}

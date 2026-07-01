@@ -49,7 +49,7 @@ export default async function ParticipantPage({ params }: Props) {
 
       <p className="text-xs text-gray-500 mb-4">{entries.length} 件の参加表明</p>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {entries.map((entry) => {
           const event = eventMap.get(entry.eventId);
           return (

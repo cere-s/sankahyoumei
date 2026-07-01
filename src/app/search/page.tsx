@@ -125,7 +125,7 @@ export default async function SearchPage({ searchParams }: Props) {
               条件に一致する参加表明はまだありません
             </p>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {entries.map((entry) => (
                 <EntryCard
                   key={entry.id}
