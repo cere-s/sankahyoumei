@@ -55,6 +55,11 @@ export default async function TopPage() {
               参加表明する
             </Link>
           </div>
+          <div className="mt-4">
+            <Link href="/search" className="text-sm text-violet-600 font-medium hover:underline">
+              作品・キャラで探す →
+            </Link>
+          </div>
           <div className="flex items-center justify-center gap-5 mt-7 text-xs text-gray-500">
             <span><span className="font-bold text-gray-800">{upcomingAll.length}</span> 開催予定</span>
             <span className="w-px h-3 bg-gray-300" />

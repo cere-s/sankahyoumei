@@ -12,6 +12,7 @@ import type {
   ShootingPolicy,
 } from '@/types';
 import { createServerClient, createAdminClient, createAuthServerClient } from './supabase/server';
+import { getEntryPlans } from './utils';
 import { generateToken, hashToken, verifyToken } from './token';
 import { verifyTweetForXId } from './tweet';
 import {
@@ -294,6 +295,57 @@ export async function getCosplaySuggestions(): Promise<CosplaySuggestions> {
     charactersByWork,
     allCharacters: [...allCharacters].sort((a, b) => a.localeCompare(b, 'ja')),
   };
+}
+
+export interface SearchCosplayParams {
+  /** 作品名（部分一致） */
+  work?: string;
+  /** キャラ名（部分一致） */
+  character?: string;
+  /** 最大取得件数（既定100） */
+  limit?: number;
+}
+
+/** 検索用の正規化（小文字化・空白除去）。イベント検索と揃える */
+function searchNormalize(s: string): string {
+  return s.toLowerCase().replace(/\s+/g, '');
+}
+
+/**
+ * コスプレ参加表明を作品名・キャラ名で横断検索する（MVP: サーバー側で取得後に部分一致フィルタ）。
+ * cosplay_plans を主対象にしつつ、旧 work_name / character_name も getEntryPlans() 経由で拾う。
+ * work と character の両方が指定された場合は、同一の予定が両方に一致する必要がある。
+ */
+export async function searchCosplayEntries(params: SearchCosplayParams): Promise<ParticipationEntry[]> {
+  const work = searchNormalize((params.work ?? '').trim());
+  const character = searchNormalize((params.character ?? '').trim());
+  const limit = params.limit ?? 100;
+  if (!work && !character) return [];
+
+  const matches = (entry: ParticipationEntry): boolean =>
+    getEntryPlans(entry).some((p) => {
+      const workOk = !work || searchNormalize(p.workTitle).includes(work);
+      const charOk = !character || searchNormalize(p.characterName).includes(character);
+      return workOk && charOk;
+    });
+
+  if (DEMO) {
+    return demoEntries
+      .filter((e) => e.participationType === 'cosplay' && matches(e))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .slice(0, limit);
+  }
+
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from('participation_entries')
+    .select('*')
+    .eq('participation_type', 'cosplay')
+    .eq('is_hidden', false)
+    .order('created_at', { ascending: false });
+
+  if (error) throw new Error(`参加表明検索エラー: ${error.message}`);
+  return (data as DBEntry[]).map(dbToEntry).filter(matches).slice(0, limit);
 }
 
 export async function getEntriesByUserId(userId: string): Promise<ParticipationEntry[]> {
