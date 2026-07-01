@@ -24,6 +24,15 @@ export const ANALYTICS_EVENT_NAMES = [
   'entry_submit_attempt',
   'entry_submit_success',
   'entry_submit_failed',
+  // トップページのセクション到達率・導線クリック計測
+  'home_hero_view',
+  'home_featured_events_view',
+  'home_character_search_view',
+  'home_latest_entries_view',
+  'home_anchor_click',
+  'home_featured_event_click',
+  'home_character_search_click',
+  'home_latest_entry_click',
 ] as const;
 
 export type AnalyticsEventName = (typeof ANALYTICS_EVENT_NAMES)[number];

@@ -37,6 +37,7 @@ export function AnalyticsTracker() {
         event_name: name,
         event_id: el.dataset.analyticsEventId || undefined,
         entry_id: el.dataset.analyticsEntryId || undefined,
+        metadata: el.dataset.analyticsLabel ? { label: el.dataset.analyticsLabel } : undefined,
       });
     };
     // capture 相で拾い、リンク遷移が始まっても計測を逃さない

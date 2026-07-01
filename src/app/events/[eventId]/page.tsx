@@ -186,7 +186,9 @@ export default async function EventDetailPage({ params, searchParams }: Props) {
 
       <ParticipationNotice className="mb-4" />
 
-      <ParticipantList entries={entries} eventId={eventId} interaction={interaction} />
+      <div id="participants">
+        <ParticipantList entries={entries} eventId={eventId} interaction={interaction} />
+      </div>
     </div>
   );
 }

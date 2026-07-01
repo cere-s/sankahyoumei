@@ -9,7 +9,7 @@ import type {
   ShootingPolicy,
 } from '@/types';
 import { createServerClient, createAdminClient, createAuthServerClient } from './supabase/server';
-import { getEntryPlans } from './utils';
+import { getEntryPlans, computePopularTags, type TagCount } from './utils';
 import { generateToken, hashToken } from './token';
 import { verifyTweetForXId } from './tweet';
 import { type DBEntry, dbToEntry, parsePlans } from './entries/mapper';
@@ -149,6 +149,43 @@ export async function getCosplaySuggestions(): Promise<CosplaySuggestions> {
     charactersByWork,
     allCharacters: [...allCharacters].sort((a, b) => a.localeCompare(b, 'ja')),
   };
+}
+
+/** トップページ「作品・キャラで探す」用の人気チップ（人数の多い順、上位limit件） */
+export async function getPopularCosplayTags(limit = 10): Promise<{ works: TagCount[]; characters: TagCount[] }> {
+  if (DEMO) {
+    const { works, characters } = computePopularTags(demoEntries.filter((e) => e.participationType === 'cosplay'));
+    return { works: works.slice(0, limit), characters: characters.slice(0, limit) };
+  }
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from('participation_entries')
+    .select('work_name, character_name, cosplay_plans')
+    .eq('participation_type', 'cosplay')
+    .eq('is_hidden', false);
+
+  if (error) {
+    console.error('getPopularCosplayTags failed:', error);
+    return { works: [], characters: [] };
+  }
+
+  const workPeople = new Map<string, number>();
+  const charPeople = new Map<string, number>();
+  type Row = { work_name: string | null; character_name: string | null; cosplay_plans: unknown };
+  for (const row of (data ?? []) as Row[]) {
+    const plans = parsePlans(row.cosplay_plans, row.work_name, row.character_name);
+    const works = new Set(plans.map((p) => p.workTitle.trim()).filter(Boolean));
+    const chars = new Set(plans.map((p) => p.characterName.trim()).filter(Boolean));
+    for (const w of works) workPeople.set(w, (workPeople.get(w) ?? 0) + 1);
+    for (const c of chars) charPeople.set(c, (charPeople.get(c) ?? 0) + 1);
+  }
+  const sort = (m: Map<string, number>): TagCount[] =>
+    [...m.entries()]
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ja'))
+      .slice(0, limit);
+
+  return { works: sort(workPeople), characters: sort(charPeople) };
 }
 
 export interface SearchCosplayParams {
