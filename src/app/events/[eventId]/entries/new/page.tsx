@@ -6,6 +6,7 @@ import { getCurrentAuth } from '@/lib/auth';
 import { StepEntryForm } from '@/components/StepEntryForm';
 import { XLoginButton } from '@/components/auth/XLoginButton';
 import { ParticipationNotice } from '@/components/ParticipationNotice';
+import { AnalyticsView } from '@/components/AnalyticsView';
 import { getGreetingLevel, getShootingPolicy } from '@/lib/utils';
 
 interface Props {
@@ -24,6 +25,9 @@ export default async function NewEntryPage({ params }: Props) {
   if (!event) notFound();
 
   const nextPath = `/events/${event.id}/entries/new`;
+  // フォームを出せるのはXログイン済み（かつユーザー名取得済み）のときだけ。
+  // それ以外はログイン壁を表示する＝ここで離脱している人を計測で切り分ける。
+  const gated = !(auth.user && auth.profile?.xUsername);
 
   // 直近の参加表明があれば、その内容をフォームの初期値として引き継ぐ。
   // ただし作品名・キャラ名はイベントごとに変わるため引き継がない（撮影スタンスのみ引き継ぐ）。
@@ -47,6 +51,9 @@ export default async function NewEntryPage({ params }: Props) {
       </div>
       <h1 className="text-xl font-bold text-gray-900 mb-4">参加表明フォーム</h1>
 
+      {/* フォーム到達を計測（gated=ログイン壁で止まっているか） */}
+      <AnalyticsView event="entry_form_view" eventId={event.id} metadata={{ gated }} />
+
       <ParticipationNotice className="mb-6" />
 
       {auth.user && auth.profile?.xUsername ? (
@@ -66,7 +73,7 @@ export default async function NewEntryPage({ params }: Props) {
             <br />
             ログインすると、あなたのXアカウント名で「Xログイン確認済み」の参加表明を作成できます。
           </p>
-          <div className="flex justify-center">
+          <div className="flex justify-center" data-analytics="login_cta_clicked" data-analytics-event-id={event.id}>
             <XLoginButton next={nextPath} label="Xでログインして参加表明する" />
           </div>
           {auth.user && !auth.profile?.xUsername && (

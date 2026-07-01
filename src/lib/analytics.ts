@@ -15,6 +15,15 @@ export const ANALYTICS_EVENT_NAMES = [
   'x_profile_clicked',
   'portfolio_clicked',
   'share_clicked',
+  // 参加表明フォームのファネル（到達したのに表明しない原因の特定用）
+  'entry_form_view',
+  'login_cta_clicked',
+  'entry_form_start',
+  'entry_step_view',
+  'entry_validation_error',
+  'entry_submit_attempt',
+  'entry_submit_success',
+  'entry_submit_failed',
 ] as const;
 
 export type AnalyticsEventName = (typeof ANALYTICS_EVENT_NAMES)[number];

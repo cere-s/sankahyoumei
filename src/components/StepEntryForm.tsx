@@ -21,6 +21,7 @@ import {
 import { CosplayPlansEditor, emptyPlan, type PlanDraft } from './CosplayPlansEditor';
 import { ShootingTargetsEditor, emptyTarget, type TargetDraft } from './ShootingTargetsEditor';
 import { EntrySuccessView } from './EntrySuccessView';
+import { track } from '@/lib/analytics-client';
 
 export interface StepDefaults {
   displayName?: string;
@@ -109,7 +110,18 @@ export function StepEntryForm({ eventId, eventName, eventHashtag, eventDate, sug
     shootingPolicy: defaults?.shootingPolicy ?? 'ok',
     comment: '',
   });
-  const update = (patch: Partial<FormData>) => setForm((f) => ({ ...f, ...patch }));
+  // フォームファネル計測：最初の操作で1回だけ form_start を送る
+  const startedRef = useRef(false);
+  const markStarted = () => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+    track({ event_name: 'entry_form_start', event_id: eventId, metadata: { participation: form.participationType } });
+  };
+
+  const update = (patch: Partial<FormData>) => {
+    markStarted();
+    setForm((f) => ({ ...f, ...patch }));
+  };
 
   const [step, setStep] = useState(1);
   const [showErr, setShowErr] = useState(false);
@@ -147,6 +159,17 @@ export function StepEntryForm({ eventId, eventName, eventHashtag, eventDate, sug
     }
   }, [draftKey, form]);
 
+  // フォームファネル計測：ステップ到達（どのステップで離脱するかの特定用）
+  useEffect(() => {
+    track({
+      event_name: 'entry_step_view',
+      event_id: eventId,
+      metadata: { step, label: STEP_LABELS[step - 1], participation: form.participationType },
+    });
+    // participationType はステップ遷移計測には含めたいが、変化のたびに再送しないよう step のみを依存にする
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, eventId]);
+
   const cleanPlans = () =>
     form.plans
       .map((p) => ({
@@ -179,8 +202,14 @@ export function StepEntryForm({ eventId, eventName, eventHashtag, eventDate, sug
   }
 
   function next() {
+    markStarted();
     const err = validateStep(step);
     if (err) {
+      track({
+        event_name: 'entry_validation_error',
+        event_id: eventId,
+        metadata: { step, message: err, participation: form.participationType },
+      });
       setStepErr(err);
       setShowErr(true);
       return;
@@ -231,6 +260,11 @@ export function StepEntryForm({ eventId, eventName, eventHashtag, eventDate, sug
   async function submit() {
     setLoading(true);
     setSubmitError('');
+    track({
+      event_name: 'entry_submit_attempt',
+      event_id: eventId,
+      metadata: { participation: form.participationType, hasImage: Boolean(imageFile) },
+    });
     try {
       const body: Record<string, unknown> = {
         eventId,
@@ -290,9 +324,21 @@ export function StepEntryForm({ eventId, eventName, eventHashtag, eventDate, sug
       } catch {
         /* ignore */
       }
+      track({
+        event_name: 'entry_submit_success',
+        event_id: eventId,
+        entry_id: result.entry.id,
+        metadata: { participation: form.participationType },
+      });
       setCreated({ entryId: result.entry.id, editToken: result.editToken });
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : '送信に失敗しました');
+      const reason = err instanceof Error ? err.message : '送信に失敗しました';
+      track({
+        event_name: 'entry_submit_failed',
+        event_id: eventId,
+        metadata: { participation: form.participationType, reason },
+      });
+      setSubmitError(reason);
       setLoading(false);
     }
   }
