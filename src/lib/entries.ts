@@ -270,6 +270,34 @@ export async function getEntryById(id: string): Promise<ParticipationEntry | nul
   return dbToEntry(data as DBEntry);
 }
 
+/** 複数IDの参加表明をまとめて取得（N+1回避）。運営集計用途で非表示も含める。 */
+export async function getEntriesByIds(ids: string[]): Promise<Map<string, ParticipationEntry>> {
+  const map = new Map<string, ParticipationEntry>();
+  const unique = [...new Set(ids.filter(Boolean))];
+  if (unique.length === 0) return map;
+
+  if (DEMO) {
+    for (const id of unique) {
+      const e = demoGetEntryById(id);
+      if (e) map.set(e.id, e);
+    }
+    return map;
+  }
+
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from('participation_entries')
+    .select('*')
+    .in('id', unique);
+
+  if (error) throw new Error(`参加表明取得エラー: ${error.message}`);
+  for (const row of (data as DBEntry[]) ?? []) {
+    const e = dbToEntry(row);
+    map.set(e.id, e);
+  }
+  return map;
+}
+
 export interface CreateEntryInput {
   eventId: string;
   displayName: string;
