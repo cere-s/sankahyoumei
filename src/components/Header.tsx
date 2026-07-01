@@ -17,7 +17,18 @@ export async function Header() {
           </span>
         </Link>
         <nav className="flex items-center gap-3">
-          <Link href="/events" className="text-sm text-gray-600 hover:text-pink-500 transition-colors">
+          <div className="hidden items-center gap-5 md:flex">
+            <Link href="/events" className="text-sm text-gray-600 transition-colors hover:text-pink-500">
+              イベントを探す
+            </Link>
+            <Link href="/search" className="text-sm text-gray-600 transition-colors hover:text-pink-500">
+              参加表明を探す
+            </Link>
+            <Link href="/#ranking" className="text-sm text-gray-600 transition-colors hover:text-pink-500">
+              ランキング
+            </Link>
+          </div>
+          <Link href="/events" className="text-sm text-gray-600 transition-colors hover:text-pink-500 md:hidden">
             イベント一覧
           </Link>
           {user ? (

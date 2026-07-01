@@ -179,6 +179,15 @@ export function formatDate(dateStr: string): string {
   });
 }
 
+/** カレンダーバッジ用に日付を分解する（例: { month: 6, day: 15, dow: '日' }） */
+export function formatDateBadge(dateStr: string): { month: number; day: number; dow: string } | null {
+  if (!dateStr) return null;
+  const d = new Date(dateStr + 'T00:00:00');
+  if (Number.isNaN(d.getTime())) return null;
+  const dow = ['日', '月', '火', '水', '木', '金', '土'][d.getDay()];
+  return { month: d.getMonth() + 1, day: d.getDate(), dow };
+}
+
 /** 表示・検索用に予定一覧を取り出す（cosplayPlans 優先、無ければ cosplayInfo を1件目として後方互換） */
 export function getEntryPlans(entry: ParticipationEntry): CosplayPlan[] {
   if (entry.cosplayPlans?.length) return entry.cosplayPlans;
