@@ -13,7 +13,12 @@ interface Props {
 export function EventCard({ event, today, count }: Props) {
   const isPast = Boolean(today && event.date < today);
   return (
-    <Link href={`/events/${event.id}`} className="block h-full">
+    <Link
+      href={`/events/${event.id}`}
+      className="block h-full"
+      data-analytics="event_card_clicked"
+      data-analytics-event-id={event.id}
+    >
       <div className={`rounded-xl border shadow-sm p-4 transition-all h-full flex flex-col ${isPast ? 'bg-gray-50 border-gray-200 hover:border-gray-300' : 'bg-white border-gray-100 hover:shadow-md hover:border-violet-100'}`}>
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">

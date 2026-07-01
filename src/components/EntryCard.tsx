@@ -44,7 +44,12 @@ export function EntryCard({ entry, eventId, eventName, interaction }: Props) {
   const policy = getShootingPolicy(entry);
   const band = getTimeBand(entry);
   return (
-    <Link href={`/events/${eventId}/entries/${entry.id}`} className="group block h-full">
+    <Link
+      href={`/events/${eventId}/entries/${entry.id}`}
+      className="group block h-full"
+      data-analytics="entry_card_clicked"
+      data-analytics-entry-id={entry.id}
+    >
       <div className={`h-full flex flex-col overflow-hidden rounded-2xl border shadow-sm group-hover:shadow-md transition-all ${PARTICIPATION_TYPE_CARD[entry.participationType]}`}>
         {/* 参加表明画像（あるときだけ大きめに。16:9・情報画像のため object-contain） */}
         {entry.imageUrl && (
@@ -75,6 +80,8 @@ export function EntryCard({ entry, eventId, eventName, interaction }: Props) {
                   rel="noopener noreferrer"
                   className="text-gray-400 text-xs hover:text-violet-500 hover:underline"
                   onClick={(e) => e.stopPropagation()}
+                  data-analytics="x_profile_clicked"
+                  data-analytics-entry-id={entry.id}
                 >
                   @{entry.xId}
                 </a>

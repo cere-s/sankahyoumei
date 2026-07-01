@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Geist } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
 import { Header } from '@/components/Header';
+import { AnalyticsTracker } from '@/components/AnalyticsTracker';
 import { DemoBanner } from '@/components/DemoBanner';
 import { DEMO } from '@/lib/demo';
 import { getSiteUrl } from '@/lib/site';
@@ -74,6 +75,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             コスいく — 好きでつながる、コスプレ参加表明サイト
           </p>
         </footer>
+        <AnalyticsTracker />
         <Analytics />
       </body>
     </html>

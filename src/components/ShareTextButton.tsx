@@ -75,6 +75,8 @@ export function ShareTextButton({ entry, event }: Props) {
     <div className="space-y-3">
       <div className="flex gap-2">
         <button onClick={handleCopy}
+          data-analytics="share_clicked"
+          data-analytics-entry-id={entry.id}
           className="flex-1 bg-violet-600 text-white rounded-xl py-3 text-sm font-bold hover:bg-violet-700 active:bg-violet-800 transition-colors">
           {copied ? 'コピーしました！' : 'X投稿用テキストをコピー'}
         </button>

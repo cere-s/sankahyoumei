@@ -10,6 +10,7 @@ import { AuthStatusNotice } from '@/components/AuthStatus';
 import { ParticipationNotice } from '@/components/ParticipationNotice';
 import { OwnerEntryActions } from '@/components/OwnerEntryActions';
 import { InteractionButtons } from '@/components/InteractionButtons';
+import { AnalyticsView } from '@/components/AnalyticsView';
 import { getCurrentUser } from '@/lib/auth';
 import { getEventInteractionContext } from '@/lib/interactions';
 import { safeHttpUrl } from '@/lib/validation';
@@ -84,6 +85,8 @@ export default async function EntryDetailPage({ params }: Props) {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
+      {/* 参加表明ごとの閲覧数（運営集計用・表示なし） */}
+      <AnalyticsView event="entry_detail_view" eventId={event.id} entryId={entry.id} />
       <div className="flex items-center gap-2 mb-6">
         <Link href={`/events/${event.id}`} className="text-sm text-gray-400 hover:text-gray-600">
           ← {event.name}
@@ -107,6 +110,8 @@ export default async function EntryDetailPage({ params }: Props) {
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 bg-black text-white text-sm font-bold px-3.5 py-1.5 rounded-full hover:bg-gray-800 transition-colors"
+            data-analytics="x_profile_clicked"
+            data-analytics-entry-id={entry.id}
           >
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -254,7 +259,9 @@ export default async function EntryDetailPage({ params }: Props) {
                   <dd>
                     <a href={safeHttpUrl(entry.photographerInfo.portfolioUrl)!} target="_blank"
                       rel="noopener noreferrer"
-                      className="text-violet-600 hover:underline text-sm break-all">
+                      className="text-violet-600 hover:underline text-sm break-all"
+                      data-analytics="portfolio_clicked"
+                      data-analytics-entry-id={entry.id}>
                       {entry.photographerInfo.portfolioUrl}
                     </a>
                   </dd>
