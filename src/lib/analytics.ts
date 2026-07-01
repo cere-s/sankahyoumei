@@ -228,3 +228,41 @@ export async function getAnalyticsSummary(range: { from: string; to: string }): 
     perEntryXClicks: toCountRows(perEntryXClicks),
   };
 }
+
+// ============================================================
+// エクスポート（AI 分析用。運営者ページ経由でのみ使う）
+// プライバシー配慮で user_id（＝誰が見たか）は含めない。
+// session_id は匿名の乱数値のみで個人を特定しない。
+// ============================================================
+
+export interface AnalyticsExportRow {
+  created_at: string;
+  event_name: string;
+  page_path: string | null;
+  event_id: string | null;
+  entry_id: string | null;
+  session_id: string | null;
+  metadata: Record<string, unknown> | null;
+}
+
+/** 期間内の生イベントを取得する（新しい順・上限あり）。user_id は返さない。 */
+export async function getAnalyticsRawEvents(
+  range: { from: string; to: string },
+  limit = 50_000
+): Promise<AnalyticsExportRow[]> {
+  if (DEMO) return [];
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('analytics_events')
+    .select('created_at, event_name, page_path, event_id, entry_id, session_id, metadata')
+    .gte('created_at', range.from)
+    .lte('created_at', range.to)
+    .order('created_at', { ascending: false })
+    .limit(Math.min(limit, MAX_ROWS));
+
+  if (error) {
+    console.error('analytics export query failed:', error.message);
+    return [];
+  }
+  return (data ?? []) as AnalyticsExportRow[];
+}

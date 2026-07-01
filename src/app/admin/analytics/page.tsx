@@ -130,9 +130,27 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
       <h1 className="mb-1 text-xl font-bold text-gray-900">アクセス解析（運営）</h1>
-      <p className="mb-5 text-sm text-gray-500">
+      <p className="mb-4 text-sm text-gray-500">
         運営者のみ閲覧できます。ユーザー向け画面には数値を表示していません。
       </p>
+
+      {/* AI分析用エクスポート（現在の期間で書き出し。誰が見たかは含めない） */}
+      <div className="mb-5 flex flex-wrap items-center gap-2 rounded-xl border border-violet-100 bg-violet-50/40 p-3">
+        <span className="text-xs font-bold text-gray-700">AI分析用エクスポート</span>
+        <a
+          href={`/api/admin/analytics/export?from=${fromDate}&to=${toDate}&format=json`}
+          className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-violet-700"
+        >
+          JSON（集計＋生ログ）
+        </a>
+        <a
+          href={`/api/admin/analytics/export?from=${fromDate}&to=${toDate}&format=csv`}
+          className="rounded-lg border border-violet-300 bg-white px-3 py-1.5 text-xs font-bold text-violet-700 hover:bg-violet-50"
+        >
+          CSV（生ログ）
+        </a>
+        <span className="text-[11px] text-gray-400">個人特定情報（user_id）は含めません</span>
+      </div>
 
       {/* 期間フィルター */}
       <form method="get" className="mb-6 flex flex-wrap items-end gap-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
