@@ -4,6 +4,7 @@ import { Geist } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
 import { Header } from '@/components/Header';
 import { AnalyticsTracker } from '@/components/AnalyticsTracker';
+import { MobileTabBar } from '@/components/MobileTabBar';
 import { DemoBanner } from '@/components/DemoBanner';
 import { DEMO } from '@/lib/demo';
 import { getSiteUrl } from '@/lib/site';
@@ -43,8 +44,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full flex flex-col bg-gradient-to-b from-pink-50 via-white to-white antialiased">
         {DEMO && <DemoBanner />}
         <Header />
-        <main className="flex-1">{children}</main>
-        <footer className="border-t border-gray-100 bg-white mt-12 py-6 text-center text-xs text-gray-400 space-y-2">
+        <main className="flex-1 pb-16 sm:pb-0">{children}</main>
+        <footer className="border-t border-gray-100 bg-white mt-12 py-6 pb-20 sm:pb-6 text-center text-xs text-gray-400 space-y-2">
           <p>
             本サービスの利用により生じた損害・トラブルについて運営者は一切の責任を負いません。
           </p>
@@ -76,6 +77,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </p>
         </footer>
         <AnalyticsTracker />
+        <MobileTabBar />
         <Analytics />
       </body>
     </html>
