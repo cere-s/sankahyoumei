@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { Event } from '@/types';
 import { formatDate } from '@/lib/utils';
 import { safeHttpUrl, REGIONS } from '@/lib/validation';
+import { buildEventAnnouncementText } from '@/lib/event-announcement';
 
 const inputClass =
   'w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300';
@@ -40,6 +41,8 @@ export function EventModeration({ events }: { events: Event[] }) {
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState<EditFields | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
+  const [previewing, setPreviewing] = useState<string | null>(null);
 
   async function patch(
     id: string,
@@ -67,8 +70,13 @@ export function EventModeration({ events }: { events: Event[] }) {
   }
 
   async function publish(id: string) {
+    const target = list.find((e) => e.id === id);
     const { ok } = await patch(id, { action: 'publish' });
-    if (ok) setList((prev) => prev.map((e) => (e.id === id ? { ...e, status: 'published' } : e)));
+    if (ok) {
+      const published = target ? { ...target, status: 'published' as const } : null;
+      setList((prev) => prev.map((e) => (e.id === id ? { ...e, status: 'published' } : e)));
+      if (published) await copyAnnouncement(published);
+    }
   }
 
   async function remove(id: string) {
@@ -94,6 +102,28 @@ export function EventModeration({ events }: { events: Event[] }) {
 
   function setD<K extends keyof EditFields>(key: K, value: EditFields[K]) {
     setDraft((prev) => (prev ? { ...prev, [key]: value } : prev));
+  }
+
+  function getOrigin(): string {
+    if (typeof window !== 'undefined') return window.location.origin;
+    return process.env.NEXT_PUBLIC_SITE_URL ?? '';
+  }
+
+  function announcementText(e: Event): string {
+    return buildEventAnnouncementText(e, getOrigin());
+  }
+
+  async function copyAnnouncement(e: Event) {
+    const text = announcementText(e);
+    try {
+      if (!navigator.clipboard) throw new Error('Clipboard API unavailable');
+      await navigator.clipboard.writeText(text);
+      setCopied(e.id);
+      setPreviewing(null);
+      setTimeout(() => setCopied((current) => (current === e.id ? null : current)), 2000);
+    } catch {
+      setPreviewing(e.id);
+    }
   }
 
   if (list.length === 0) {
@@ -174,6 +204,18 @@ export function EventModeration({ events }: { events: Event[] }) {
                     確認済みにする
                   </button>
                 )}
+                {e.status === 'published' && (
+                  <>
+                    <button onClick={() => copyAnnouncement(e)}
+                      className="bg-violet-600 text-white rounded-lg px-3 py-1.5 text-xs font-bold hover:bg-violet-700">
+                      {copied === e.id ? '告知文面をコピーしました' : '告知文面をコピー'}
+                    </button>
+                    <button onClick={() => setPreviewing((current) => (current === e.id ? null : e.id))}
+                      className="border border-gray-200 text-gray-600 rounded-lg px-3 py-1.5 text-xs font-bold hover:bg-gray-50">
+                      {previewing === e.id ? '文面を閉じる' : '文面を確認'}
+                    </button>
+                  </>
+                )}
                 <button onClick={() => startEdit(e)}
                   className="border border-gray-200 text-gray-600 rounded-lg px-3 py-1.5 text-xs font-bold hover:bg-gray-50">
                   修正
@@ -183,6 +225,18 @@ export function EventModeration({ events }: { events: Event[] }) {
                   取り下げ
                 </button>
               </div>
+              {previewing === e.id && (
+                <div className="mt-3">
+                  <textarea
+                    readOnly
+                    value={announcementText(e)}
+                    rows={9}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 bg-gray-50 resize-none focus:outline-none focus:ring-2 focus:ring-violet-300"
+                    onClick={(ev) => ev.currentTarget.select()}
+                  />
+                  <p className="text-xs text-gray-400 mt-1">コピーできない場合は、テキストを選択して手動でコピーできます</p>
+                </div>
+              )}
             </>
           )}
         </div>
