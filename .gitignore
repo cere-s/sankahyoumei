@@ -34,3 +34,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Claude Code local tooling (settings, dev-server launch config, background-task worktrees)
+/.claude/
+
+# generated report, not meant to be committed
+/docs/participation-trends-2026-07-02.md
