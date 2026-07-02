@@ -8,8 +8,7 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
-  "workers_dev": true,
-  "preview_urls": true,
+  "workers_dev": false,
   "routes": [
     {
       "pattern": "sankahyomei.com",
