@@ -345,7 +345,7 @@ export function StepEntryForm({ eventId, eventName, eventHashtag, eventDate, sug
   }
 
   return (
-    <div className="pb-24">
+    <div className="pb-44 sm:pb-24">
       {/* ステップ表示 */}
       <div className="mb-5">
         <div className="flex items-center justify-between mb-2">
@@ -578,7 +578,7 @@ export function StepEntryForm({ eventId, eventName, eventHashtag, eventDate, sug
       {stepErr && <p className="text-sm text-red-500 mt-3">{stepErr}</p>}
 
       {/* 下部固定ナビ */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-3 z-10">
+      <div className="fixed bottom-14 left-0 right-0 bg-white border-t border-gray-100 px-4 py-3 z-10 sm:bottom-0">
         <div className="max-w-2xl mx-auto flex gap-3">
           {step > 1 ? (
             <button type="button" onClick={back} disabled={loading} className="flex-1 border border-gray-200 text-gray-600 rounded-xl py-3 text-sm font-bold hover:bg-gray-50 disabled:opacity-50">
