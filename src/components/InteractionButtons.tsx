@@ -20,8 +20,6 @@ interface Props {
   counts?: Partial<Record<InteractionType, number>>;
   /** この相手とブロック関係にある */
   restricted?: boolean;
-  /** カード（Link）内に置くときはクリックの伝播・遷移を止める */
-  insideLink?: boolean;
   className?: string;
 }
 
@@ -40,7 +38,6 @@ export function InteractionButtons({
   initialSelected = [],
   counts = {},
   restricted = false,
-  insideLink = false,
   className = '',
 }: Props) {
   const pathname = usePathname();
@@ -55,17 +52,10 @@ export function InteractionButtons({
 
   const isOwn = Boolean(viewerUserId && viewerUserId === toUserId);
 
-  function stop(e: React.MouseEvent) {
-    if (insideLink) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  }
-
   // 自分の参加表明
   if (isOwn) {
     return (
-      <p className={`text-[11px] text-gray-400 ${className}`} onClick={stop}>
+      <p className={`text-[11px] text-gray-400 ${className}`}>
         自分の参加表明には追加できません
       </p>
     );
@@ -74,7 +64,7 @@ export function InteractionButtons({
   // ブロック関係
   if (restricted) {
     return (
-      <p className={`text-[11px] text-gray-400 ${className}`} onClick={stop}>
+      <p className={`text-[11px] text-gray-400 ${className}`}>
         このユーザーとの交流は制限されています
       </p>
     );
@@ -148,8 +138,7 @@ export function InteractionButtons({
     }
   }
 
-  function handleClick(e: React.MouseEvent, type: InteractionType) {
-    stop(e);
+  function handleClick(type: InteractionType) {
     if (!viewerUserId) {
       setShowLogin(true);
       return;
@@ -158,7 +147,7 @@ export function InteractionButtons({
   }
 
   return (
-    <div className={className} onClick={stop}>
+    <div className={className}>
       <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-2.5">
         <p className="text-[11px] font-bold text-gray-500 mb-1.5 flex items-center gap-1">
           <svg className="w-3 h-3 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -175,7 +164,7 @@ export function InteractionButtons({
             <button
               key={type}
               type="button"
-              onClick={(e) => handleClick(e, type)}
+              onClick={() => handleClick(type)}
               disabled={busy}
               aria-pressed={on}
               className={`inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-full border font-bold transition-colors disabled:opacity-60 ${
