@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
-import { Geist } from 'next/font/google';
+import { Geist, Zen_Kaku_Gothic_New, JetBrains_Mono } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
 import { Header } from '@/components/Header';
 import { AnalyticsTracker } from '@/components/AnalyticsTracker';
@@ -13,6 +13,20 @@ import './globals.css';
 
 const geist = Geist({
   variable: '--font-geist',
+  subsets: ['latin'],
+});
+
+// 参加者カード・イベントヒーローの見出しにのみ使う強調書体（本文は引き続き Geist）
+const zenKaku = Zen_Kaku_Gothic_New({
+  variable: '--font-display',
+  weight: ['700', '900'],
+  subsets: ['latin'],
+});
+
+// 時間帯・件数などの計測値表示に使う等幅書体
+const jetbrainsMono = JetBrains_Mono({
+  variable: '--font-mono-data',
+  weight: ['500', '700'],
   subsets: ['latin'],
 });
 
@@ -59,7 +73,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ja" className={`${geist.variable} h-full`}>
+    <html lang="ja" className={`${geist.variable} ${zenKaku.variable} ${jetbrainsMono.variable} h-full`}>
       <body className="min-h-full flex flex-col bg-gradient-to-b from-pink-50 via-white to-white antialiased">
         {DEMO && <DemoBanner />}
         <Header />

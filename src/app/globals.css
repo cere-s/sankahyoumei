@@ -10,3 +10,13 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist), Arial, Helvetica, sans-serif;
 }
+
+/* 参加者カード・イベントヒーローの見出しにのみ使う強調書体 */
+.font-display {
+  font-family: var(--font-display), var(--font-geist), sans-serif;
+}
+
+/* 時間帯・件数などの計測値表示に使う等幅書体 */
+.font-mono-data {
+  font-family: var(--font-mono-data), ui-monospace, monospace;
+}

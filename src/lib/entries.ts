@@ -14,6 +14,7 @@ import { generateToken, hashToken } from './token';
 import { verifyTweetForXId } from './tweet';
 import { type DBEntry, dbToEntry, parsePlans } from './entries/mapper';
 import { canEditEntry } from './entries/authz';
+import { getProfilesByUserIds } from './auth';
 import {
   DEMO,
   demoEntries,
@@ -57,6 +58,33 @@ function cleanPlansForStorage(plans?: CosplayPlan[]): CosplayPlan[] | null {
   return cleaned.length ? cleaned : null;
 }
 
+/**
+ * カード表示用に、投稿者の最新Xアイコン・カメラマンの作例をまとめて付加する。
+ * 作成時点のスナップショットではなく、都度最新のプロフィール情報を反映する。
+ */
+async function attachProfileInfo(entries: ParticipationEntry[]): Promise<ParticipationEntry[]> {
+  if (DEMO || entries.length === 0) return entries;
+  const userIds = entries.map((e) => e.userId).filter((id): id is string => Boolean(id));
+  if (userIds.length === 0) return entries;
+
+  const profiles = await getProfilesByUserIds(userIds);
+  return entries.map((e) => {
+    const profile = e.userId ? profiles.get(e.userId) : undefined;
+    if (!profile) return e;
+    return {
+      ...e,
+      avatarUrl: profile.xAvatarUrl,
+      photographerSamples: e.participationType === 'photographer' ? profile.photographerSamples : undefined,
+    };
+  });
+}
+
+async function attachProfileInfoSingle(entry: ParticipationEntry | null): Promise<ParticipationEntry | null> {
+  if (!entry) return null;
+  const [enriched] = await attachProfileInfo([entry]);
+  return enriched ?? entry;
+}
+
 export async function getRecentEntries(limit = 10): Promise<ParticipationEntry[]> {
   if (DEMO) {
     return [...demoEntries]
@@ -72,7 +100,7 @@ export async function getRecentEntries(limit = 10): Promise<ParticipationEntry[]
     .limit(limit);
 
   if (error) throw new Error(`参加表明取得エラー: ${error.message}`);
-  return (data as DBEntry[]).map(dbToEntry);
+  return attachProfileInfo((data as DBEntry[]).map(dbToEntry));
 }
 
 /** イベントごとの参加表明数を集計して { eventId: 件数 } で返す */
@@ -237,7 +265,7 @@ export async function searchCosplayEntries(params: SearchCosplayParams): Promise
     .order('created_at', { ascending: false });
 
   if (error) throw new Error(`参加表明検索エラー: ${error.message}`);
-  return (data as DBEntry[]).map(dbToEntry).filter(matches).slice(0, limit);
+  return attachProfileInfo((data as DBEntry[]).map(dbToEntry).filter(matches).slice(0, limit));
 }
 
 export async function getEntriesByUserId(userId: string): Promise<ParticipationEntry[]> {
@@ -255,7 +283,7 @@ export async function getEntriesByUserId(userId: string): Promise<ParticipationE
     .order('created_at', { ascending: false });
 
   if (error) throw new Error(`参加表明取得エラー: ${error.message}`);
-  return (data as DBEntry[]).map(dbToEntry);
+  return attachProfileInfo((data as DBEntry[]).map(dbToEntry));
 }
 
 export async function getEntriesByXId(xId: string): Promise<ParticipationEntry[]> {
@@ -273,7 +301,7 @@ export async function getEntriesByXId(xId: string): Promise<ParticipationEntry[]
     .order('created_at', { ascending: false });
 
   if (error) throw new Error(`参加表明取得エラー: ${error.message}`);
-  return (data as DBEntry[]).map(dbToEntry);
+  return attachProfileInfo((data as DBEntry[]).map(dbToEntry));
 }
 
 export async function getEntriesByEventId(eventId: string): Promise<ParticipationEntry[]> {
@@ -291,7 +319,7 @@ export async function getEntriesByEventId(eventId: string): Promise<Participatio
     .order('created_at', { ascending: false });
 
   if (error) throw new Error(`参加表明取得エラー: ${error.message}`);
-  return (data as DBEntry[]).map(dbToEntry);
+  return attachProfileInfo((data as DBEntry[]).map(dbToEntry));
 }
 
 export async function getEntryById(id: string): Promise<ParticipationEntry | null> {
@@ -305,7 +333,7 @@ export async function getEntryById(id: string): Promise<ParticipationEntry | nul
     .single();
 
   if (error || !data) return null;
-  return dbToEntry(data as DBEntry);
+  return attachProfileInfoSingle(dbToEntry(data as DBEntry));
 }
 
 /** 複数IDの参加表明をまとめて取得（N+1回避）。運営集計用途で非表示も含める。 */

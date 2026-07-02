@@ -110,7 +110,7 @@ export default async function EventDetailPage({ params, searchParams }: Props) {
 
         <div className="flex items-center justify-between gap-3 mt-5">
           <p className="text-sm text-violet-50">
-            参加表明 <span className="text-xl font-bold text-white">{entries.length}</span> 件
+            参加表明 <span className="font-mono-data text-xl font-bold text-white">{entries.length}</span> 件
           </p>
           <Link
             href={`/events/${event.id}/entries/new`}

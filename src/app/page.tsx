@@ -62,9 +62,9 @@ export default async function TopPage() {
               誰がどの作品・キャラで来るかが、当日より前に分かります。
             </p>
             <div className="flex items-center justify-center gap-5 mb-5 text-sm text-gray-600">
-              <span><span className="font-bold text-lg text-gray-900">{upcomingAll.length}</span> 開催予定</span>
+              <span><span className="font-mono-data font-bold text-lg text-gray-900">{upcomingAll.length}</span> 開催予定</span>
               <span className="w-px h-3 bg-gray-300" />
-              <span><span className="font-bold text-lg text-gray-900">{totalEntries}</span> 参加表明</span>
+              <span><span className="font-mono-data font-bold text-lg text-gray-900">{totalEntries}</span> 参加表明</span>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href="/events"
@@ -110,7 +110,8 @@ export default async function TopPage() {
           ) : (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {featuredEvents.map(({ event, soon, popular }) => (
-                <div key={event.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+                <div key={event.id} className="relative overflow-hidden bg-white rounded-xl border border-gray-100 shadow-sm p-4 pl-5">
+                  <span aria-hidden className={`absolute left-0 top-0 bottom-0 w-1 ${soon ? 'bg-pink-500' : 'bg-amber-400'}`} />
                   <div className="flex flex-wrap gap-1.5 mb-2">
                     {soon && (
                       <span className="text-[11px] bg-pink-100 text-pink-700 px-2 py-0.5 rounded-full font-bold">もうすぐ開催</span>
@@ -124,7 +125,7 @@ export default async function TopPage() {
                     {formatDate(event.date)} · {event.location}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    参加表明 <span className="font-bold text-violet-700">{entryCounts[event.id] ?? 0}</span> 件
+                    参加表明 <span className="font-mono-data font-bold text-violet-700">{entryCounts[event.id] ?? 0}</span> 件
                   </p>
                   <div className="flex gap-2 mt-3">
                     <Link
