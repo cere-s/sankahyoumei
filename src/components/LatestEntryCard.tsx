@@ -61,6 +61,7 @@ export function LatestEntryCard({ entry, eventId, eventName }: Props) {
         <span aria-hidden className={`absolute left-0 top-0 bottom-0 w-1 ${PARTICIPATION_TYPE_SPINE[entry.participationType]}`} />
 
         {photoUrl ? (
+          // 画像自体に文字入りの独自テンプレートを使う人が多いため、タグ等は重ねない（タグはカード下部に表示）
           <div className="relative w-full aspect-video bg-gray-100 overflow-hidden flex items-center justify-center ml-1">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -69,11 +70,6 @@ export function LatestEntryCard({ entry, eventId, eventName }: Props) {
               loading="lazy"
               className="w-full h-full object-contain"
             />
-            <span
-              className={`absolute top-1.5 left-0 z-10 text-[9px] font-bold py-1 pl-2 pr-3 ${PARTICIPATION_TYPE_COLORS[entry.participationType]} [clip-path:polygon(0_0,calc(100%-5px)_0,100%_50%,calc(100%-5px)_100%,0_100%)]`}
-            >
-              {PARTICIPATION_TYPE_LABELS[entry.participationType]}
-            </span>
           </div>
         ) : hasSignals ? (
           // 画像がない代わりに、時間帯・温度感・予定メモの抜粋で同じ枠を埋める
@@ -120,13 +116,11 @@ export function LatestEntryCard({ entry, eventId, eventName }: Props) {
             </div>
           )}
           {photoIsSample && <p className="text-[9px] text-gray-400 mt-0.5">作例（プロフィール）</p>}
-          {!photoUrl && (
-            <span
-              className={`mt-auto self-start text-[10px] px-2 py-0.5 rounded-full font-bold ${PARTICIPATION_TYPE_COLORS[entry.participationType]}`}
-            >
-              {PARTICIPATION_TYPE_LABELS[entry.participationType]}
-            </span>
-          )}
+          <span
+            className={`mt-auto self-start text-[10px] px-2 py-0.5 rounded-full font-bold ${PARTICIPATION_TYPE_COLORS[entry.participationType]}`}
+          >
+            {PARTICIPATION_TYPE_LABELS[entry.participationType]}
+          </span>
         </div>
       </div>
     </Link>

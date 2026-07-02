@@ -72,15 +72,14 @@ function ViewfinderCorners({ light, size = 'md' }: { light?: boolean; size?: 'md
   );
 }
 
-/** 種別タグ（旗のような形の切り欠き。画像がある時は左上に載せ、無い時はカード右上に置く） */
-function TypeTag({ type, onPhoto }: { type: ParticipationEntry['participationType']; onPhoto?: boolean }) {
+/**
+ * 種別タグ。ユーザー画像は独自のイラスト・文字入りテンプレートであることが多く、
+ * 上に重ねると内容と衝突するため、画像には重ねず通常の行として表示する。
+ */
+function TypeTag({ type }: { type: ParticipationEntry['participationType'] }) {
   return (
     <span
-      className={`absolute top-2 z-10 text-[10px] font-bold py-1 ${PARTICIPATION_TYPE_COLORS[type]} ${
-        onPhoto
-          ? 'left-0 pl-2.5 pr-3.5 [clip-path:polygon(0_0,calc(100%-6px)_0,100%_50%,calc(100%-6px)_100%,0_100%)]'
-          : 'right-3 pl-3.5 pr-2.5 [clip-path:polygon(6px_0,100%_0,100%_100%,6px_100%,0_50%)]'
-      }`}
+      className={`shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full ${PARTICIPATION_TYPE_COLORS[type]}`}
     >
       {PARTICIPATION_TYPE_LABELS[type]}
     </span>
@@ -141,17 +140,20 @@ export function EntryCard({ entry, eventId, eventName, interaction }: Props) {
         className={`relative h-full flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm group-hover:shadow-md motion-safe:transition-all ${PARTICIPATION_TYPE_BORDER[entry.participationType]}`}
       >
         <span aria-hidden className={`absolute left-0 top-0 bottom-0 w-1 ${PARTICIPATION_TYPE_SPINE[entry.participationType]}`} />
-        {!entry.imageUrl && <TypeTag type={entry.participationType} />}
 
         <div className="flex flex-col flex-1 pl-5 pr-4 py-4">
-          {eventName && (
-            <p className="text-[11px] font-medium text-violet-600 mb-1.5 line-clamp-1">{eventName}</p>
-          )}
+          <div className="flex items-start justify-between gap-2 mb-1.5">
+            {eventName ? (
+              <p className="text-[11px] font-medium text-violet-600 line-clamp-1">{eventName}</p>
+            ) : (
+              <span />
+            )}
+            <TypeTag type={entry.participationType} />
+          </div>
 
-          {/* 参加表明自体の画像（あれば主役として大きく。ビューファインダー枠で囲む） */}
+          {/* 参加表明自体の画像（あれば主役として大きく。ビューファインダー枠で囲む。画像自体に文字入りの独自テンプレートを使う人が多いため、タグ等は重ねない） */}
           {entry.imageUrl && (
             <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-gray-100 mb-3">
-              <TypeTag type={entry.participationType} onPhoto />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={entry.imageUrl}
