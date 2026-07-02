@@ -175,6 +175,8 @@ CREATE TABLE IF NOT EXISTS profiles (
   x_username     TEXT,
   x_display_name TEXT,
   x_avatar_url   TEXT,
+  -- カメラマンの作例（最大4件・全参加表明で共通表示）。各要素: { url, key, subjectXId? }
+  photographer_samples JSONB NOT NULL DEFAULT '[]'::jsonb,
   created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

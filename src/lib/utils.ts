@@ -133,6 +133,30 @@ export const PARTICIPATION_TYPE_CARD: Record<ParticipationType, string> = {
   undecided: 'bg-gray-50 border-gray-200 group-hover:border-gray-300',
 };
 
+/** 参加者カード左端の種別カラー帯（EntryCard/LatestEntryCard） */
+export const PARTICIPATION_TYPE_SPINE: Record<ParticipationType, string> = {
+  cosplay: 'bg-pink-500',
+  photographer: 'bg-blue-500',
+  general: 'bg-emerald-500',
+  undecided: 'bg-gray-300',
+};
+
+/** 参加者カードの枠線（白背景・ホバーで種別カラーに寄せる） */
+export const PARTICIPATION_TYPE_BORDER: Record<ParticipationType, string> = {
+  cosplay: 'border-gray-100 group-hover:border-pink-200',
+  photographer: 'border-gray-100 group-hover:border-blue-200',
+  general: 'border-gray-100 group-hover:border-emerald-200',
+  undecided: 'border-gray-100 group-hover:border-gray-200',
+};
+
+/** アイコンのリング色（種別を色でも識別できるように） */
+export const PARTICIPATION_TYPE_RING: Record<ParticipationType, string> = {
+  cosplay: 'ring-pink-400',
+  photographer: 'ring-blue-400',
+  general: 'ring-emerald-400',
+  undecided: 'ring-gray-300',
+};
+
 export const COSPLAY_STATUS_COLORS: Record<CosplayShootingStatus, string> = {
   greeting_welcome: 'bg-emerald-100 text-emerald-800',
   mutual_ok: 'bg-blue-100 text-blue-800',
@@ -177,6 +201,18 @@ export function formatDate(dateStr: string): string {
     month: 'long',
     day: 'numeric',
   });
+}
+
+/** イベント一覧カードの日付半券用（月・日・曜日）。不正な日付なら null */
+export function formatDateStub(dateStr: string): { month: string; day: string; weekday: string } | null {
+  if (!dateStr) return null;
+  const d = new Date(dateStr + 'T00:00:00');
+  if (Number.isNaN(d.getTime())) return null;
+  return {
+    month: `${d.getMonth() + 1}月`,
+    day: String(d.getDate()).padStart(2, '0'),
+    weekday: d.toLocaleDateString('ja-JP', { weekday: 'short' }),
+  };
 }
 
 /** 表示・検索用に予定一覧を取り出す（cosplayPlans 優先、無ければ cosplayInfo を1件目として後方互換） */

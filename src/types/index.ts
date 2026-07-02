@@ -89,6 +89,14 @@ export interface PhotographerInfo {
 /** 参加表明の認証状態 */
 export type AuthStatus = 'verified_x' | 'unverified' | 'legacy_token' | 'hidden';
 
+/** カメラマンの作例（プロフィールに保存・全参加表明で共通表示。最大4件） */
+export interface PhotographerSample {
+  url: string;
+  key: string;
+  /** 被写体のXアカウント（任意・撮影者による自己申告のクレジット表記） */
+  subjectXId?: string;
+}
+
 /** Xログインユーザーのプロフィール（profiles テーブル） */
 export interface Profile {
   id: string;
@@ -96,6 +104,7 @@ export interface Profile {
   xUsername?: string;
   xDisplayName?: string;
   xAvatarUrl?: string;
+  photographerSamples?: PhotographerSample[];
 }
 
 export interface ParticipationEntry {
@@ -120,6 +129,10 @@ export interface ParticipationEntry {
   xUserId?: string;
   xUsernameSnapshot?: string;
   authStatus: AuthStatus;
+  /** 投稿者のXアイコン（profiles から都度取得。カード表示専用の付加情報） */
+  avatarUrl?: string;
+  /** 投稿者（カメラマン）のプロフィール作例。profiles から都度取得 */
+  photographerSamples?: PhotographerSample[];
   /** 後方互換: 1件目の予定 + 撮影スタンス */
   cosplayInfo?: CosplayInfo;
   /** 当日の予定キャラ（複数可） */

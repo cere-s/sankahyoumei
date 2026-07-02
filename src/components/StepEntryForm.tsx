@@ -20,6 +20,7 @@ import {
 } from '@/lib/utils';
 import { CosplayPlansEditor, emptyPlan, type PlanDraft } from './CosplayPlansEditor';
 import { ShootingTargetsEditor, emptyTarget, type TargetDraft } from './ShootingTargetsEditor';
+import { PhotographerSamplesEditor } from './PhotographerSamplesEditor';
 import { EntrySuccessView } from './EntrySuccessView';
 import { track } from '@/lib/analytics-client';
 
@@ -429,7 +430,12 @@ export function StepEntryForm({ eventId, eventName, eventHashtag, eventDate, sug
             <CosplayPlansEditor plans={form.plans} onChange={(plans) => update({ plans })} suggestions={suggestions} showErrors={showErr} />
           )}
           {form.participationType === 'photographer' && (
-            <ShootingTargetsEditor targets={form.targets} onChange={(targets) => update({ targets })} suggestions={suggestions} />
+            <div className="space-y-5">
+              <PhotographerSamplesEditor initialSamples={profile.photographerSamples ?? []} />
+              <div className="border-t border-gray-100 pt-4">
+                <ShootingTargetsEditor targets={form.targets} onChange={(targets) => update({ targets })} suggestions={suggestions} />
+              </div>
+            </div>
           )}
           {(form.participationType === 'general' || form.participationType === 'undecided') && (
             <div className="space-y-3">
