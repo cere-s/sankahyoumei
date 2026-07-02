@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
 import { Geist } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
@@ -6,6 +6,7 @@ import { Header } from '@/components/Header';
 import { AnalyticsTracker } from '@/components/AnalyticsTracker';
 import { MobileTabBar } from '@/components/MobileTabBar';
 import { DemoBanner } from '@/components/DemoBanner';
+import { InstallAppPrompt } from '@/components/InstallAppPrompt';
 import { DEMO } from '@/lib/demo';
 import { getSiteUrl } from '@/lib/site';
 import './globals.css';
@@ -20,8 +21,22 @@ const description = '好きでつながる、コスプレ参加表明サイト�
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
+  applicationName: siteName,
   title: { default: siteName, template: `%s｜コスいく` },
   description,
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    title: siteName,
+    statusBarStyle: 'default',
+  },
+  icons: {
+    icon: [
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
   // デモ版は検索エンジンに載せない
   robots: DEMO ? { index: false, follow: false } : undefined,
   openGraph: {
@@ -36,6 +51,10 @@ export const metadata: Metadata = {
     title: siteName,
     description,
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#ec4899',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -78,6 +97,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </footer>
         <AnalyticsTracker />
         <MobileTabBar />
+        <InstallAppPrompt />
         <Analytics />
       </body>
     </html>
