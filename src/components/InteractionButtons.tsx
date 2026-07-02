@@ -23,12 +23,50 @@ interface Props {
   className?: string;
 }
 
-/** 種別ごとの選択時カラー */
-const ON_STYLE: Record<InteractionType, string> = {
-  want_to_shoot: 'bg-blue-600 text-white border-blue-600',
-  want_to_be_shot: 'bg-pink-600 text-white border-pink-600',
-  want_to_meet: 'bg-violet-600 text-white border-violet-600',
+/** 種別ごとのアクセントカラー・アイコン塗り色 */
+const TYPE_ACCENT: Record<InteractionType, { border: string; bg: string; text: string; dot: string }> = {
+  want_to_shoot: { border: 'border-blue-400', bg: 'bg-blue-50', text: 'text-blue-600', dot: 'bg-blue-600' },
+  want_to_be_shot: { border: 'border-pink-400', bg: 'bg-pink-50', text: 'text-pink-600', dot: 'bg-pink-600' },
+  want_to_meet: { border: 'border-violet-400', bg: 'bg-violet-50', text: 'text-violet-600', dot: 'bg-violet-600' },
 };
+
+/** 意思表示の種類ごとの簡易アイコン（カメラ／ポートレート／2人） */
+function InteractionIcon({ type, className }: { type: InteractionType; className?: string }) {
+  const common = {
+    viewBox: '0 0 20 20',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.6,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+  };
+  if (type === 'want_to_shoot') {
+    return (
+      <svg className={className} {...common} aria-hidden="true">
+        <rect x="2.5" y="6.5" width="15" height="9.5" rx="2" />
+        <path d="M7.2 6.5l1.1-1.8h3.4l1.1 1.8" />
+        <circle cx="10" cy="11.2" r="2.8" />
+      </svg>
+    );
+  }
+  if (type === 'want_to_be_shot') {
+    return (
+      <svg className={className} {...common} aria-hidden="true">
+        <rect x="3" y="3" width="14" height="14" rx="3" />
+        <circle cx="10" cy="8.6" r="2.1" />
+        <path d="M5.8 14.8c.9-2.1 2.6-3.2 4.2-3.2s3.3 1.1 4.2 3.2" />
+      </svg>
+    );
+  }
+  return (
+    <svg className={className} {...common} aria-hidden="true">
+      <circle cx="6.6" cy="7.2" r="2.1" />
+      <circle cx="13.4" cy="7.2" r="2.1" />
+      <path d="M2.8 15.6c.6-2.4 2.1-3.7 3.8-3.7s3.2 1.3 3.8 3.7" />
+      <path d="M9.6 15.6c.6-2.4 2.1-3.7 3.8-3.7s3.2 1.3 3.8 3.7" />
+    </svg>
+  );
+}
 
 export function InteractionButtons({
   toEntryId,
@@ -146,6 +184,10 @@ export function InteractionButtons({
     void toggle(type);
   }
 
+  const availableTypes = availableInteractionTypes(targetType);
+  const gridColsClass =
+    availableTypes.length >= 3 ? 'grid-cols-3' : availableTypes.length === 2 ? 'grid-cols-2' : 'grid-cols-1';
+
   return (
     <div className={className}>
       <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-2.5">
@@ -155,34 +197,41 @@ export function InteractionButtons({
           </svg>
           参加者に伝える
         </p>
-        <div className="flex flex-wrap gap-1.5">
-        {availableInteractionTypes(targetType).map((type) => {
-          const on = selected.has(type);
-          const busy = pending.has(type);
-          const count = localCounts[type] ?? 0;
-          return (
-            <button
-              key={type}
-              type="button"
-              onClick={() => handleClick(type)}
-              disabled={busy}
-              aria-pressed={on}
-              className={`inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-full border font-bold transition-colors disabled:opacity-60 ${
-                on ? ON_STYLE[type] : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              {on && (
-                <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                  <path fillRule="evenodd" d="M16.7 5.3a1 1 0 010 1.4l-7 7a1 1 0 01-1.4 0l-3-3a1 1 0 111.4-1.4l2.3 2.3 6.3-6.3a1 1 0 011.4 0z" clipRule="evenodd" />
-                </svg>
-              )}
-              {on ? INTERACTION_DONE_LABELS[type] : INTERACTION_LABELS[type]}
-              {count > 0 && (
-                <span className={`text-[10px] font-normal ${on ? 'text-white/70' : 'text-gray-400'}`}>{count}</span>
-              )}
-            </button>
-          );
-        })}
+        <div className={`grid ${gridColsClass} gap-1.5`}>
+          {availableTypes.map((type) => {
+            const on = selected.has(type);
+            const busy = pending.has(type);
+            const count = localCounts[type] ?? 0;
+            const accent = TYPE_ACCENT[type];
+            return (
+              <button
+                key={type}
+                type="button"
+                onClick={() => handleClick(type)}
+                disabled={busy}
+                aria-pressed={on}
+                aria-label={on ? INTERACTION_DONE_LABELS[type] : INTERACTION_LABELS[type]}
+                className={`relative flex flex-col items-center justify-center gap-1 rounded-xl border px-1 py-2.5 motion-safe:transition-colors disabled:opacity-60 ${
+                  on ? `${accent.border} ${accent.bg}` : 'border-gray-200 bg-white hover:border-gray-300'
+                }`}
+              >
+                {/* 受信数は0のとき出さない（新着カードが「0 0」で寂しく見えるのを防ぐ）。押した状態は枠色＋バッジ色で示す */}
+                {count > 0 && (
+                  <span
+                    className={`absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 font-mono-data text-[10px] font-bold leading-none ${
+                      on ? `${accent.dot} text-white` : 'bg-gray-100 text-gray-500'
+                    }`}
+                  >
+                    {count}
+                  </span>
+                )}
+                <InteractionIcon type={type} className={`w-4 h-4 ${on ? accent.text : 'text-gray-400'}`} />
+                <span className={`text-[11px] font-bold leading-none ${on ? accent.text : 'text-gray-600'}`}>
+                  {INTERACTION_LABELS[type]}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {showLogin && !viewerUserId && (

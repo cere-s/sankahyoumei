@@ -127,6 +127,11 @@ export function EntryCard({ entry, eventId, eventName, interaction }: Props) {
   const band = getTimeBand(entry);
   const samples = entry.photographerSamples ?? [];
   const portfolioUrl = safeHttpUrl(entry.photographerInfo?.portfolioUrl);
+  // カメラマンは、参加表明自体の画像が無ければ作例（プロフィール共通）を主役として大きく見せる
+  const heroSample = entry.participationType === 'photographer' ? samples[0] : undefined;
+  const heroImageUrl = entry.imageUrl ?? heroSample?.url;
+  const heroIsSample = !entry.imageUrl && Boolean(heroSample);
+  const remainingSamples = heroIsSample ? samples.slice(1) : samples;
 
   return (
     <div
@@ -153,17 +158,27 @@ export function EntryCard({ entry, eventId, eventName, interaction }: Props) {
           <TypeTag type={entry.participationType} />
         </div>
 
-        {/* 参加表明自体の画像（あれば主役として大きく。ビューファインダー枠で囲む。画像自体に文字入りの独自テンプレートを使う人が多いため、タグ等は重ねない） */}
-        {entry.imageUrl && (
-          <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-gray-100 mb-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={entry.imageUrl}
-              alt={entry.imageAlt ?? `${entry.displayName} の参加表明画像`}
-              loading="lazy"
-              className="w-full h-full object-contain"
-            />
-            <ViewfinderCorners light />
+        {/* 参加表明自体の画像（あれば主役として大きく。無ければカメラマンは作例で代替）。ビューファインダー枠で囲む。画像自体に文字入りの独自テンプレートを使う人が多いため、タグ等は重ねない */}
+        {heroImageUrl && (
+          <div className="mb-3">
+            <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-gray-100">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={heroImageUrl}
+                alt={heroIsSample ? `${entry.displayName} の作例` : (entry.imageAlt ?? `${entry.displayName} の参加表明画像`)}
+                loading="lazy"
+                className="w-full h-full object-contain"
+              />
+              <ViewfinderCorners light />
+            </div>
+            {heroIsSample && (
+              <p className="mt-1.5 text-[11px] text-gray-400">
+                作例
+                {entry.photographerInfo && entry.photographerInfo.shootingStyles.length > 0 && (
+                  <span>：{entry.photographerInfo.shootingStyles.map((s) => PHOTOGRAPHER_SHOOTING_STYLE_LABELS[s]).join('・')}</span>
+                )}
+              </p>
+            )}
           </div>
         )}
 
@@ -232,11 +247,11 @@ export function EntryCard({ entry, eventId, eventName, interaction }: Props) {
         {/* カメラマン情報：作例（プロフィール共通）を主役にする */}
         {entry.participationType === 'photographer' && (
           <div className="mt-3 pt-3 border-t border-gray-50">
-            {samples.length > 0 ? (
+            {remainingSamples.length > 0 && (
               <>
-                <p className="text-[10px] text-gray-400 mb-1">いつもの作例</p>
+                <p className="text-[10px] text-gray-400 mb-1">{heroIsSample ? 'ほかの作例' : 'いつもの作例'}</p>
                 <div className="flex gap-1">
-                  {samples.map((s, i) => (
+                  {remainingSamples.map((s, i) => (
                     <button
                       key={s.key}
                       type="button"
@@ -250,28 +265,34 @@ export function EntryCard({ entry, eventId, eventName, interaction }: Props) {
                     </button>
                   ))}
                 </div>
-                {openSampleIndex !== null && samples[openSampleIndex] && (
-                  <SampleLightbox sample={samples[openSampleIndex]} />
+                {openSampleIndex !== null && remainingSamples[openSampleIndex] && (
+                  <SampleLightbox sample={remainingSamples[openSampleIndex]} />
                 )}
               </>
-            ) : portfolioUrl ? (
+            )}
+
+            {portfolioUrl && (
               <a
                 href={portfolioUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 data-analytics="portfolio_clicked"
                 data-analytics-entry-id={entry.id}
-                className="relative z-10 flex items-center gap-2 rounded-lg border border-dashed border-gray-200 px-3 py-2 text-xs hover:border-violet-300 hover:bg-violet-50/40 transition-colors"
+                className={`relative z-10 flex items-center gap-2 rounded-lg border border-dashed border-gray-200 px-3 py-2 text-xs hover:border-violet-300 hover:bg-violet-50/40 transition-colors ${
+                  remainingSamples.length > 0 ? 'mt-2' : ''
+                }`}
               >
                 <span className="text-violet-500 shrink-0">↗</span>
                 <span className="min-w-0 flex-1">
-                  <span className="block font-bold text-gray-700 truncate">作例・ポートフォリオを見る</span>
+                  <span className="block font-bold text-gray-700 truncate">
+                    {samples.length > 0 ? 'ほかの作例・ポートフォリオを見る' : '作例・ポートフォリオを見る'}
+                  </span>
                   <span className="block text-gray-400 truncate">{hostnameOf(portfolioUrl)}</span>
                 </span>
               </a>
-            ) : null}
+            )}
 
-            {entry.photographerInfo && entry.photographerInfo.shootingStyles.length > 0 && (
+            {!heroIsSample && entry.photographerInfo && entry.photographerInfo.shootingStyles.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-2">
                 {entry.photographerInfo.shootingStyles.map((s) => (
                   <span key={s} className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
@@ -281,10 +302,18 @@ export function EntryCard({ entry, eventId, eventName, interaction }: Props) {
               </div>
             )}
 
+            {entry.photographerInfo?.availableHours && (
+              <p className="mt-2 text-xs text-gray-500">
+                <span className="font-bold text-gray-600">撮影可能：</span>
+                {entry.photographerInfo.availableHours}
+              </p>
+            )}
+
             {targets.length > 0 && (
               <p className="mt-2 text-xs text-gray-500 line-clamp-1">
                 <span className="font-bold text-gray-600">撮りたい：</span>
-                {targets.map((t) => [t.workTitle, t.characterName].filter(Boolean).join('/')).join('、')}
+                {targets.slice(0, 2).map((t) => [t.workTitle, t.characterName].filter(Boolean).join('/')).join('、')}
+                {targets.length > 2 && ` ほか${targets.length - 2}件`}
               </p>
             )}
           </div>
