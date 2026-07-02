@@ -16,6 +16,7 @@
 - Tailwind CSS v4
 - Supabase (Database + RLS)
 - Vercel (ホスティング)
+- Cloudflare Workers（`@opennextjs/cloudflare`、Vercelと並行稼働）
 
 ---
 
@@ -188,6 +189,57 @@ npm run dev
    | `OG_REFRESH_SECRET` | `/api/admin/refresh-og` を使う場合に設定 |
 
 3. Deploy
+
+---
+
+## Cloudflare Workers デプロイ手順
+
+Vercelと並行して、[`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare) を使い Cloudflare Workers上でも同じアプリを動かせます（静的サイトではなく、SSR・API routes・middlewareがフル動作するWorkers上での実行です）。
+
+### 1. リポジトリ連携（Workers Builds）
+
+1. [Cloudflareダッシュボード](https://dash.cloudflare.com/) → **Workers & Pages** → **Import a repository** から本リポジトリを接続
+2. Build command: `npx opennextjs-cloudflare build`
+3. Deploy command: `npx opennextjs-cloudflare deploy`
+
+push するたびに自動でビルド・デプロイされます（Workers Builds）。
+
+### 2. 環境変数の設定
+
+Cloudflareでは設定場所が2箇所に分かれます。
+
+- **ビルド時に必要な変数**（Workers Builds の **Settings → Build → Build variables and secrets**）
+  - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`（または `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`）
+  - `NEXT_PUBLIC_SITE_URL` — デプロイ先のURL（例: `https://sankahyoumei.your-subdomain.workers.dev`）。**Cloudflareには Vercel の `VERCEL_URL` に相当する自動環境変数が無いため、必ず明示的に設定してください**（[`src/lib/site.ts`](src/lib/site.ts) の `getSiteUrl()` は `NEXT_PUBLIC_SITE_URL` を最優先し、未設定だと `localhost` にフォールバックしてしまいます）
+  - `NEXT_PUBLIC_DEMO_MODE`（デモ環境の場合）
+- **サーバー専用シークレット**（Worker本体の **Settings → Variables and Secrets**、Secret種別で設定）
+  - `SUPABASE_SERVICE_ROLE_KEY`
+  - `RESEND_API_KEY`, `REPORT_EMAIL_TO`, `REPORT_EMAIL_FROM`, `CONTACT_EMAIL_TO`
+  - `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_BASE_URL`
+  - `ADMIN_USER_IDS`
+  - `OG_REFRESH_SECRET`
+
+### 3. Supabase側の追加設定
+
+SupabaseのAuth設定（Redirect URLs）に、Cloudflareの本番URL（`*.workers.dev` またはカスタムドメイン）を追加してください。追加しないと、Cloudflare上でのXログイン後のリダイレクトが失敗します。
+
+### 4. ローカルでの動作確認
+
+```bash
+npm run build      # next build
+npm run preview    # opennextjs-cloudflare build && opennextjs-cloudflare preview（Workers runtime相当でローカル確認）
+npm run deploy:cf   # opennextjs-cloudflare build && opennextjs-cloudflare deploy（CLIから手動デプロイしたい場合）
+```
+
+### 5. 技術的な補足
+
+- 全ページ `export const dynamic = 'force-dynamic'` で、ISR/`revalidate` は未使用のため、Incremental Cache用R2バケットや `WORKER_SELF_REFERENCE` バインディングは設定していません
+- `wrangler.jsonc` の `nodejs_compat` フラグにより、`@aws-sdk/client-s3`（[`src/lib/r2.ts`](src/lib/r2.ts)）、`resend`、`@supabase/ssr`（[`src/middleware.ts`](src/middleware.ts)）がそのまま動作します
+- DB（Supabase Postgres）・認証（Supabase Auth）・画像ストレージ（Cloudflare R2）は変更していません。Cloudflareに移すのはNext.jsのサーバー処理（Workers）のみです
+
+### 6. 将来のTODO：`@vercel/analytics` の撤去
+
+現時点では `@vercel/analytics`（[`src/app/layout.tsx`](src/app/layout.tsx) の `<Analytics />`）をそのまま残しています。Cloudflare上ではこの計測ビーコンが単に404するだけで、表示・機能には影響しません。VercelとCloudflareの並行稼働を検証し、Vercel側の運用を縮小・廃止するタイミングで、`<Analytics />` と `import`、`package.json` の依存を削除してください（内製の `AnalyticsTracker` はVercelに依存しないため、この撤去とは無関係にそのまま使えます）。
 
 ---
 
