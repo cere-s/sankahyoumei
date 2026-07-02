@@ -40,5 +40,10 @@
     "typescript": "^5",
     "vitest": "^3.2.6",
     "wrangler": "^4.106.0"
+  },
+  "overrides": {
+    "@emnapi/core": "^1.11.1",
+    "@emnapi/runtime": "^1.11.1",
+    "@emnapi/wasi-threads": "^1.2.2"
   }
 }
